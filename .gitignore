@@ -1,0 +1,6 @@
+/.idea/
+/_release/*.txt
+/_release/*.bat
+/_release/*.db
+/_release/*.zip
+/test/

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<!-- saved from url=(0057)http://semicircle.github.io/blog/2013/09/29/go-with-cors/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>用Go实现CORS跨域资源共享的服务器支持</title>
+
+  <link rel="stylesheet" href="./用Go实现CORS跨域资源共享的服务器支持_files/main.css">
+  <link rel="canonical" href="http://semicircle.github.io/blog/2013/09/29/go-with-cors/">
+  <link rel="alternate" type="application/rss+xml" title="博闻强志" href="http://semicircle.github.io/feed.xml">
+<style type="text/css">._th-container ._th-item{margin-bottom:3px;position:relative;width:30px;height:30px;cursor:pointer;opacity:.3;background-color:aquamarine;border-radius:100%;text-align:center;line-height:30px;-webkit-transition:all .35s;-o-transition:all .35s;transition:all .35s;right:30px}._th-container ._th-item._item-x2{margin-left:18px;width:40px;height:40px;line-height:40px}._th-container ._th-item._item-x-2{margin-left:17px;width:38px;height:38px;line-height:38px}._th-container ._th-item._item-x4{width:36px;height:36px;margin-left:16px;line-height:36px}._th-container ._th-item._item-x-4{width:32px;height:32px;line-height:32px;margin-left:14px}._th-container ._th-item._item-reset{width:30px;line-height:30px;height:30px;margin-left:10px}._th-click-hover{position:relative;-webkit-transition:all .5s;-o-transition:all .5s;transition:all .5s;height:50px;width:50px;cursor:pointer;opacity:.3;border-radius:100%;background-color:aquamarine;text-align:center;line-height:50px;right:0}._th-container:hover{left:-10px}._th-container{font-size:12px;-webkit-transition:all .5s;-o-transition:all .5s;transition:all .5s;left:-40px;top:20%;position:fixed;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:100000;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}._th-container ._th-item:hover{opacity:.8;background-color:#5fb492;color:aliceblue}._th-container ._th-item:active{opacity:.9;background-color:#316347;color:aliceblue}._th-container:hover ._th-click-hover{opacity:.8}._th-container:hover ._th-item{opacity:.6;right:0}._th-container ._th-click-hover:hover{opacity:.8;background-color:#5fb492;color:aliceblue}._th_cover-all-show-times{position:fixed;top:0;right:0;width:100%;height:100%;z-index:99999;opacity:1;font-weight:900;font-size:30px;color:#4f4f4f;background-color:rgba(0,0,0,0.1)}._th_cover-all-show-times._th_hidden{z-index:-99999;opacity:0;-webkit-transition:1s all;-o-transition:1s all;transition:1s all}._th_cover-all-show-times ._th_times{width:300px;height:300px;border-radius:50%;background-color:rgba(127,255,212,0.51);text-align:center;line-height:300px;position:absolute;top:50%;right:50%;margin-top:-150px;margin-right:-150px;}</style></head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="http://semicircle.github.io/">博闻强志</a>
+
+    <nav class="site-nav">
+      <a href="http://semicircle.github.io/blog/2013/09/29/go-with-cors/#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"></path>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"></path>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"></path>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="http://semicircle.github.io/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">用Go实现CORS跨域资源共享的服务器支持</h1>
+    <p class="post-meta">Sep 29, 2013</p>
+  </header>
+
+  <article class="post-content">
+    <h3>CORS简介</h3>
+
+<p>CORS全称Cross-Origin resource sharing， 即:跨域资源共享。 </p>
+
+<p>根据Wikipedia的解释，跨域资源共享（CORS）是一种机制，它允许在网页上的JavaScript的XMLHttpRequest访问到另一个域，而不是该JavaScript的原有域。 这样的“跨域”的要求，在CORS之前， 根据Web浏览器的同源原则，是被禁止通过Web浏览器的。CORS定义了一种方法，通过浏览器和服务器交互，以确定服务器是否允许跨源请求。这比严格遵守同源规则，是更强大的。但同时也是更安全的，比简单地允许所有这种跨域请求。（不太通顺么？其实是Google Translate的，我自己写得还不如这段..）</p>
+
+<p>在CORS出现以前，已经有了多种方法实现跨域访问，比如JSONP等。所以本篇介绍的CORS也只是跨域访问的一种，任何技术都有其有点与缺点，需要根据实际应用场景来选择。</p>
+
+<p>这里简单与JSONP对比一下，JSONP本质是通过JavaScript操作浏览器页面DOM创建Script对象，再将Script的src指向另一个域内的资源，服务器将数据伪装成为一段JavaScript代码来实现跨域的目的。这样的方式的天然限制是只能发起GET请求，对于有REST洁癖的人而言，这是一种折磨。此外，还可以想象存在的安全隐患：“由远程服务器发送过来的JavaScript...”，中间的漏洞无数。</p>
+
+<p>CORS的限制是需要浏览器的支持，目前的支持情况尚属乐观：</p>
+
+<p><img src="./用Go实现CORS跨域资源共享的服务器支持_files/cors_support.png" alt="CanIUse 截图"></p>
+
+<h3>CORS的机制</h3>
+
+<p>对前端而言，依旧使用XMLHttpRequest对象（IE使用XDomainRequest），增加了参数和响应事件，整体变化不大。这是因为浏览器负责了与服务器的额外交互，对JavaScript编写者而言，这些都是不可见的。</p>
+
+<p>对服务器端，就要具体研究到CORS的两种流程了：</p>
+
+<ol>
+<li>简单请求</li>
+<li>不那么简单的请求</li>
+</ol>
+
+<!-- more -->
+
+<h4>简单请求：</h4>
+
+<p>任何简单请求必须满足一系列限制，包括HTTP Method、HTTP Headers等，原则上，这个限制范围内的请求，浏览器在CORS机制以前就可以发出的。比如：JSONP可以发出的跨域GET请求，或者HTML表单可以发出的POST请求。</p>
+
+<h5>简单请求的处理：</h5>
+
+<p>对于简单的CORS请求，最简单的处理方法是，增加以下一行到你的Response Header里</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">    Access-Control-Allow-Origin: *
+</code></pre></div>
+<p>用Go的方法就是</p>
+<div class="highlight"><pre><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nx">setAllowOrigin</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">w</span><span class="p">.</span><span class="nx">Header</span><span class="p">().</span><span class="nx">Add</span><span class="p">(</span><span class="s">"Access-Control-Allow-Origin"</span><span class="p">,</span> <span class="s">"*"</span><span class="p">)</span>
+    <span class="k">return</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>其中，<code>Access-Control-Allow-Origin</code>是指可以跨域访问本地资源的源域。</p>
+
+<p>如果你还想处理POST、PUT、GET这些复杂请求，或者更精确的控制CORS，比如允许的源范围，是否允许Cookie，那就要继续往下看了</p>
+
+<h4>不那么简单的请求</h4>
+
+<p>对于任何非简单请求，浏览器会先与服务器进行沟通，达成一致后，再发出实际请求。</p>
+
+<p>这沟通的方式就是：</p>
+
+<h5>Preflight请求</h5>
+
+<p>在发起实际请求前，浏览器首先通过OPTIONS方式（这样才能从任何服务器收到响应）：</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">OPTIONS /cors HTTP/1.1
+Origin: http://api.bob.com
+Access-Control-Request-Method: PUT
+Access-Control-Request-Headers: X-Custom-Header
+</code></pre></div>
+<p>其中，</p>
+
+<ul>
+<li><code>Access-Control-Request-Method</code>是浏览器想要发出的请求类型，</li>
+<li><code>Access-Control-Request-Headers</code>是实际请求发送过来时的额外的Header类型，这些参数都是用逗号分割的多值字符串。</li>
+</ul>
+
+<h5>Preflight响应</h5>
+
+<p>服务器端响应Preflight Request如下：</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">Access-Control-Allow-Origin: http://api.bob.com
+Access-Control-Allow-Methods: GET, POST, PUT
+Access-Control-Allow-Headers: X-Custom-Header
+Content-Type: text/html; charset=utf-8
+</code></pre></div>
+<p>其中，</p>
+
+<ul>
+<li><code>Access-Control-Allow-Origin</code>为CORS响应标配。</li>
+<li><code>Access-Control-Allow-Methods</code> 和 <code>Access-Control-Allow-Headers</code>是服务器端支持的方法和头信息。值得注意的是，这里应该填写全集，而非对应Preflight请求里的项目。</li>
+</ul>
+
+<p>此外，</p>
+
+<ul>
+<li><code>Access-Control-Max-Age</code>是告诉浏览器多少秒以内，不需要再请求Preflight. </li>
+<li><code>Access-Control-Allow-Credentials</code>是告诉浏览器是否支持Cookie</li>
+</ul>
+
+<h5>Preflight响应: 沟通失败</h5>
+
+<p>如果Preflight请求发来的权限超过了服务器所支持的，我们该如何回复呢？</p>
+
+<p>方法是：忽略掉<code>Access-Control-Allow-Origin</code>这个全系标配即可，就像一个普通HTTP 200返回，如此这般浏览器就不会发起实际请求了。</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">// invalid cors request!
+Content-Type: text/html; charset=utf-8
+</code></pre></div>
+<h5>实际请求与响应</h5>
+
+<p>当浏览器收到Preflight Request以后，确认服务器端支持CORS无误，就到了发起实际请求的步骤。</p>
+
+<p>实际请求：</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">PUT /cors HTTP/1.1
+Origin: http://api.bob.com
+Host: api.alice.com
+X-Custom-Header: value
+Accept-Language: en-US
+Connection: keep-alive
+User-Agent: Mozilla/5.0...
+</code></pre></div>
+<p>实际响应：</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">Access-Control-Allow-Origin: http://api.bob.com
+Content-Type: text/html; charset=utf-8
+</code></pre></div>
+<p>这里与普通的请求就相差不多了， <code>Origin</code>是请求的标配，<code>Access-Control-Allow-Origin</code>是响应的标配。</p>
+
+<h5>交互过程：</h5>
+
+<p><img src="./用Go实现CORS跨域资源共享的服务器支持_files/cors_flow.png" alt="交互过程"></p>
+
+<h3>TL;DR ?来点简单的</h3>
+
+<h4>服务器响应流程图</h4>
+
+<p>如果你觉得上文太长了， 其实一幅图就可以理清过程：</p>
+
+<p><img src="./用Go实现CORS跨域资源共享的服务器支持_files/cors_server_flowchart.png" alt="全景"></p>
+
+<h4>如何用Go语言实现？</h4>
+
+<p>按照上述流程与图，通过判断Request Header和写Response Header实现, 比如最开始判断是Preflight还是Actual Request</p>
+<div class="highlight"><pre><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">cors</span> <span class="o">*</span><span class="nx">Cors</span><span class="p">)</span> <span class="nx">ServeHTTP</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">origin</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="s">"Origin"</span><span class="p">);</span> <span class="nx">origin</span> <span class="o">==</span> <span class="s">""</span> <span class="p">{</span>
+        <span class="nx">cors</span><span class="p">.</span><span class="nx">corsNotValid</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">r</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Method</span> <span class="o">!=</span> <span class="s">"OPTIONS"</span> <span class="p">{</span>
+        <span class="c1">//actual request.</span>
+        <span class="nx">cors</span><span class="p">.</span><span class="nx">actualRequest</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">r</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">acrm</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="s">"Access-Control-Request-Method"</span><span class="p">);</span> <span class="nx">acrm</span> <span class="o">==</span> <span class="s">""</span> <span class="p">{</span>
+        <span class="c1">//actual request.</span>
+        <span class="nx">cors</span><span class="p">.</span><span class="nx">actualRequest</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">r</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">//preflight request.</span>
+        <span class="nx">cors</span><span class="p">.</span><span class="nx">preflightRequest</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">r</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>或者找一个现成的实现，比如：</p>
+
+<h4>gocors</h4>
+
+<p><a href="http://github.com/semicircle/gocors">gocors</a> 是我实现的一个简单的CORS的工具集</p>
+
+<p>用法是：</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">import (
+    "github.com/semicircle/gocors"
+    ...
+)
+
+...
+    cors := gocors.New()
+    http.Handle("/", cors.Handler(x))
+...
+</code></pre></div>
+<p>对于任何的http.Handler x, 只要替换成 cors.Handler(x)，那么这个Handler就会具有接受CORS Request的能力.</p>
+
+<p>更多详细的说明与配置请阅读gocors文档。</p>
+
+<h3>感谢</h3>
+
+<p>感谢永远放在一个大标题下：</p>
+
+<p><a href="http://enable-cors.org/">1. enable-cors.org</a></p>
+
+<p><a href="http://www.html5rocks.com/en/tutorials/cors/">2. http://www.html5rocks.com/en/tutorials/cors/</a> 大部分原理其实是这篇的翻译和缩写</p>
+
+<p><a href="http://www.test-cors.org/">3. http://www.test-cors.org/</a> 我用这个测试了gocors</p>
+
+  </article>
+
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">博闻强志</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li>博闻强志</li>
+          <li><a href="mailto:semicircle21@google.com">semicircle21@google.com</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/semicircle">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"></path>
+                </svg>
+              </span>
+
+              <span class="username">semicircle</span>
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://twitter.com/semicircle21">
+              <span class="icon  icon--twitter">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
+                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"></path>
+                </svg>
+              </span>
+
+              <span class="username">semicircle21</span>
+            </a>
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">程序与旅行</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  
+
+
+<div><div class="_th-container">
+    <div class="_th-click-hover" onclick="changeTime()">
+        x1
+    </div>
+    <div class="_th-item _item-x2" onclick="changeTime(2,0,true)">&gt;</div>
+    <div class="_th-item _item-x-2" onclick="changeTime(-2,0,true)">&lt;</div>
+    <div class="_th-item _item-x4" onclick="changeTime(0,4)">&gt;&gt;</div>
+    <div class="_th-item _item-x-4" onclick="changeTime(0,-4)">&lt;&lt;</div>
+    <div class="_th-item _item-reset" onclick="changeTime(0,0,false,true)">O</div>
+</div>
+<div class="_th_cover-all-show-times _th_hidden">
+    <div class="_th_times">x1</div>
+</div></div></body></html>
