@@ -1,0 +1,139 @@
+[
+    {
+        "TableName": "demo",
+        "entityName": "demo",
+        "EntityName": "Demo",
+        "note": "代码",
+        "fields": [
+            {
+                "Name": "id",
+                "Type": "TEXT",
+                "Primary": true,
+                "Note": "",
+                "_type": "string"
+            },
+            {
+                "Name": "lang",
+                "Type": "TEXT",
+                "Note": "代码语言",
+                "_type": "string"
+            },
+            {
+                "Name": "description",
+                "Type": "TEXT",
+                "Note": "描述",
+                "_type": "string"
+            },
+            {
+                "Name": "content",
+                "Type": "TEXT",
+                "Note": "内容",
+                "_type": "string"
+            },
+            {
+                "Name": "createTime",
+                "Type": "TEXT",
+                "Note": "创建时间",
+                "_type": "string"
+            },
+            {
+                "Name": "tags",
+                "Type": "TEXT",
+                "Note": "标签",
+                "_type": "string"
+            },
+            {
+                "Name": "bak1",
+                "Type": "TEXT",
+                "Note": "备用1",
+                "_type": "string"
+            },
+            {
+                "Name": "bak2",
+                "Type": "TEXT",
+                "Note": "备用2",
+                "_type": "string"
+            }
+        ],
+        "sql": {
+            "CreateIndex": "CREATE INDEX if not exists 'demo_id' ON 'demo' ( 'id' ASC );"
+        },
+        "description": {
+            "1": "id 是 uuid，src 是原本的文本内容，dist 是翻译结构",
+            "2": "bak1 和 bak2 是如果有其他需要翻译的内容，可以设置"
+        }
+    },
+    {
+        "TableName": "pubweb",
+        "entityName": "pubweb",
+        "EntityName": "PubWeb",
+        "note": "发布本地文件作为一个网站",
+        "fields": [
+            {
+                "Name": "id",
+                "Type": "TEXT",
+                "Primary": true,
+                "Note": "",
+                "_type": "string"
+            },
+            {
+                "Name": "dir",
+                "Type": "TEXT",
+                "Note": "文件路径",
+                "_type": "string"
+            },
+            {
+                "Name": "perPath",
+                "Type": "TEXT",
+                "Note": "网站前缀",
+                "_type": "string"
+            },
+            {
+                "Name": "type",
+                "Type": "TEXT",
+                "Note": "服务类型，例如网站，文件服务",
+                "_type": "string"
+            },
+            {
+                "Name": "status",
+                "Type": "TEXT",
+                "Note": "状态（启用、弃用）",
+                "_type": "string"
+            },
+            {
+                "Name": "createTime",
+                "Type": "TEXT",
+                "Note": "创建时间",
+                "_type": "string"
+            },
+            {
+                "Name": "bak1",
+                "Type": "TEXT",
+                "Note": "备用1",
+                "_type": "string"
+            },
+            {
+                "Name": "bak2",
+                "Type": "TEXT",
+                "Note": "备用2",
+                "_type": "string"
+            }
+        ],
+        "sql": {
+        },
+        "description": {
+            "1": "id 是 uuid，src 是原本的文本内容，dist 是翻译结构",
+            "2": "bak1 和 bak2 是如果有其他需要翻译的内容，可以设置"
+        }
+    },
+    {
+        "no": true,
+        "description": "这里可以编写任意内容作为注释，该部分不会被自动生成识别"
+    },
+    {
+        "no": true,
+        "tag": "build",
+        "outputPath": "C:\\Users\\HUZENGYUN\\go\\src\\public.sunibas.cn\\go_utils_public\\src\\main\\Sqls\\Sqls.go",
+        "packageName": "Sqls"
+    }
+]

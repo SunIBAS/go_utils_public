@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API</title>
+    <script src="./../base.js?"></script>
+</head>
+<body>
+<div id="app">
+    <i-button @click="show">Click me!</i-button>
+    <Modal v-model="visible" title="Welcome">Welcome to ViewUI</Modal>
+</div>
+<script>
+    injectIviewCore(function () {
+        console.log('load');
+        new Vue({
+            el: '#app',
+            data: {
+                visible: false
+            },
+            methods: {
+                show: function () {
+                    this.visible = true;
+                }
+            }
+        })
+    });
+</script>
+</body>
+</html>

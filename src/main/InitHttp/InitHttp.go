@@ -6,11 +6,16 @@ import (
 	"github.com/semicircle/gocors"
 	"log"
 	"net/http"
+	"public.sunibas.cn/go_utils_public/src/main/MainTools"
 	"time"
 )
 
+var (
+	config = MainTools.Config{}
+)
+
 func InitHttp(configPath string) {
-	config := Entrance(configPath)
+	config = Entrance(configPath)
 	statikFS, err := fs.New()
 	if err != nil {
 		log.Fatal(err)
@@ -22,6 +27,9 @@ func InitHttp(configPath string) {
 		http.Redirect(w, r, "/public/views/index.html", http.StatusFound)
 	})
 	InitAction()
+	InitSocket()
+	//
+	InitPubWeb()
 	srv := &http.Server{
 		Addr:           config.Port,
 		Handler:        nil,

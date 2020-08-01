@@ -16,35 +16,48 @@ type ReturnObj struct {
 	Content string
 }
 
-func (rObj * ReturnObj)SetContent(obj interface{}) {
+func (rObj * ReturnObj)SetContent(obj interface{}) * ReturnObj {
 	jsonStr,_ := json.MarshalIndent(obj,"","")
 	rObj.Content = string(jsonStr)
+	return rObj
 }
 
-func (rObj * ReturnObj)SetFail(msg string) {
-	rObj.Code = 100
+func (rObj * ReturnObj)SetError(msg string) * ReturnObj {
+	rObj.Code = Error
 	if len(msg) == 0 {
 		rObj.Message = "fail"
 	} else {
 		rObj.Message = msg
 	}
+	return rObj
 }
-func (rObj * ReturnObj)SetSuccess(msg string) {
-	rObj.Code = 200
+func (rObj * ReturnObj)SetFail(msg string) * ReturnObj {
+	rObj.Code = Fail
+	if len(msg) == 0 {
+		rObj.Message = "fail"
+	} else {
+		rObj.Message = msg
+	}
+	return rObj
+}
+func (rObj * ReturnObj)SetSuccess(msg string) * ReturnObj {
+	rObj.Code = Success
 	if len(msg) == 0 {
 		rObj.Message = "success"
 	} else {
 		rObj.Message = msg
 	}
+	return rObj
 }
 
-func (rObj * ReturnObj)Send(w http.ResponseWriter)  {
+func (rObj * ReturnObj)Send(w http.ResponseWriter) * ReturnObj {
 	jsonStr,_ := json.MarshalIndent(rObj,"","")
 	content := string(jsonStr)
 	content = strings.Replace(content, "\\u003c", "<", -1)
 	content = strings.Replace(content, "\\u003e", ">", -1)
 	content = strings.Replace(content, "\\u0026", "&", -1)
 	fmt.Fprintf(w, content)
+	return rObj
 }
 
 func PostReturn(w http.ResponseWriter,rObj ReturnObj) {

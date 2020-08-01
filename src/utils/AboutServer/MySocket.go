@@ -1,15 +1,14 @@
-package MySocket
+package AboutServer
 
 import (
 	"fmt"
 	"golang.org/x/net/websocket"
 	"net/http"
 	"net/url"
-	"public.sunibas.cn/go_utils_public/src/utils/AboutServer"
 )
 
-var ToDearMessage func([]byte,* AboutServer.Longsocket) error
-func InitSocket(path string,tdm func([]byte,* AboutServer.Longsocket) error) {
+var ToDearMessage func([]byte,* Longsocket) error
+func InitSocket(path string,tdm func([]byte,* Longsocket) error) {
 	ToDearMessage = tdm
 	http.Handle(path, websocket.Handler(handleSocket))
 }
@@ -27,12 +26,12 @@ func handleSocket(ws *websocket.Conn) {
 	//user := u.Query().Get("user")
 	//password := u.Query().Get("password")
 	//fmt.Println(user, password)
-	mysocket := AboutServer.NewConn("", "", "", false, 128*1024)
+	mysocket := NewConn("", "", "", false, 128*1024)
 	mysocket.SetSocket(ws)
 	defer mysocket.Close()
 	go mysocket.WriteLoop()
 	go mysocket.ReadLoop()
-	mysocket.Read(func(bytes []byte, longsocket * AboutServer.Longsocket) error {
+	mysocket.Read(func(bytes []byte, longsocket * Longsocket) error {
 		return ToDearMessage(bytes,longsocket)
 	})
 }
