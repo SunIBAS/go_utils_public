@@ -25,6 +25,7 @@ const insertCssOrJs = (function () {
         },false);
     };
     return (cb,files) => {
+        console.log(files)
         let task = [];
         files.forEach(file => {
             if (file.split('?')[0].endsWith('.js')) {
@@ -46,15 +47,53 @@ const insertCssOrJs = (function () {
     };
 })();
 
-let sourceIP = "/public/iview/";
+window.sourceIP = "";
+window.baseIP = "";
+
+window.loading = ()=>{};
+window.closeLoading = ()=>{};
+window.showMessage = (msg,type)=>{};
+
 const injectIviewCore = function (cb) {
+    let sourcePath = "";
+    let child = !(window.parent === window);
+    window.sourceIP = location.origin;
     if (location.pathname.substring(0,7) !== "/public") {
-        sourceIP = `http://localhost:3000` + sourceIP;
+        window.baseIP = `http://localhost:3000/`;
+        window.sourceIP += "/go_utils_public/html"
+    } else {
+        window.baseIP = window.sourceIP + "/";
+        window.sourceIP += "/public"
     }
     cb = cb || (() => {});
-    insertCssOrJs(cb,[
-        'iview.css',
-        'vue.min.js',
-        'iview.min.js',
-    ].map(_ => sourceIP + _));
+
+    const canGetFromParentSource = [
+        ...[
+            "toFetch.js",
+            "pubweb.js",
+            "Actions.js",
+            "index.js",
+        ].map(_ => window.sourceIP + "/Request/" + _)
+    ];
+    const baseSource = [
+        ...[
+            'iview.css',
+            'vue.min.js',
+            'iview.min.js',
+        ].map(_ => window.sourceIP + "/iview/" + _)
+    ];
+    insertCssOrJs(function () {
+        if (child) {
+            window.RequestInstance = window.parent.RequestInstance;
+            window.loading = window.parent.loading;
+            window.closeLoading = window.parent.closeLoading;
+            window.showMessage = window.parent.showMessage;
+        } else {
+            window.RequestInstance(baseIP);
+        }
+        cb();
+    },[
+        ...(child ? []:canGetFromParentSource),
+        ...baseSource,
+    ]);
 };

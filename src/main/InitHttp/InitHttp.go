@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"public.sunibas.cn/go_utils_public/src/main/MainTools"
+	_ "public.sunibas.cn/go_utils_public/statik"
 	"time"
 )
 
@@ -16,6 +17,7 @@ var (
 
 func InitHttp(configPath string) {
 	config = Entrance(configPath)
+	defer config.DB.Close()
 	statikFS, err := fs.New()
 	if err != nil {
 		log.Fatal(err)
@@ -26,10 +28,13 @@ func InitHttp(configPath string) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/public/views/index.html", http.StatusFound)
 	})
+	// /api/
 	InitAction()
+	// /socket
 	InitSocket()
-	//
+	// 挂载网页 /pubWeb/
 	InitPubWeb()
+	InitSources(config.CwdPath,statikFS)
 	srv := &http.Server{
 		Addr:           config.Port,
 		Handler:        nil,

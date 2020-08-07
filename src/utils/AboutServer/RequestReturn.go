@@ -16,6 +16,10 @@ type ReturnObj struct {
 	Content string
 }
 
+func (rObj * ReturnObj)SetStringContent(obj string) * ReturnObj {
+	rObj.Content = obj
+	return rObj
+}
 func (rObj * ReturnObj)SetContent(obj interface{}) * ReturnObj {
 	jsonStr,_ := json.MarshalIndent(obj,"","")
 	rObj.Content = string(jsonStr)

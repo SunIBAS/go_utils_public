@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API</title>
+    <script src="./../base.js?"></script>
+</head>
+<body>
+<template id="app">
+    <div style="padding: 8px;">
+        <div>
+            <Checkbox v-model="child">含子文件夹</Checkbox>
+            <i-input v-model="path" placeholder="输入一个文件夹路径" style="width: calc(100% - 200px)"></i-input>
+            <i-button @click="getAll">获取文件</i-button>
+        </div>
+        <div style="padding-top: 10px;">
+            <Alert>筛选条件，当前选中的文件共有{{filter.fileCount}}个，<i-button @click="checkFileCount">重新统计</i-button></Alert>
+            <Checkbox v-model="filter.noFile">不要文件(共{{filter.allFileCount}}个)</Checkbox>
+            <Checkbox v-model="filter.noDir">不要文件夹(共{{filter.allDirCount}}个)</Checkbox>
+            <div>
+                选择后缀类型
+                <Checkbox
+                        :indeterminate="filter.ext.length > 0 && filter.ext.length !== filter.allExt.length"
+                        :value="filter.ext.length === filter.allExt.length"
+                        @click.prevent.native="toggleSelectExt">全选</Checkbox>
+                <checkbox-group v-model="filter.ext">
+                    <Checkbox style="width: 150px;" v-for="e in filter.allExt" :label="e">
+                        <span>{{e}}</span>
+                    </Checkbox>
+                </checkbox-group>
+            </div>
+        </div>
+        <div style="padding-top: 10px">
+            <Alert>动作
+                <i-button type="info" @click="renameFiles">重命名</i-button>
+                <i-button type="warning">修改所在位置</i-button>
+                <i-button type="error">删除</i-button>
+            </Alert>
+        </div>
+    </div>
+</template>
+<script>
+    injectIviewCore(function () {
+        console.log('load');
+        window._cache = {
+            files: [],
+            dirs: [],
+            exts: [],
+            extMap: {},
+        };
+        let getExt = name => {
+            let e = name.split('.');
+            return "." + e[e.length - 1];
+        };
+        window.$vue = new Vue({
+            el: '#app',
+            data: {
+                path: "C:\\Users\\HUZENGYUN\\Documents\\git\\java\\abcdefg",
+                child: false,
+                filter: {
+                    noDir: false,
+                    allDirCount: 0,
+                    noFile: false,
+                    allFileCount: 0,
+                    ext: [],
+                    allExt: [],
+                    fileCount: 0
+                }
+            },
+            methods: {
+                getAll() {
+                    RequestInstance.action.FileOpAction.GetSubFiles(this.path,this.child).then(files => {
+                        window._cache.files = [];
+                        window._cache.dirs = [];
+                        window._cache.exts = [];
+                        window._cache.extMap = [];
+                        let exts = {};
+                        files.forEach(f => {
+                            if (f.File) {
+                                let _e = getExt(f.Name);
+                                if (!(_e in exts)) {
+                                    exts[_e] = 0;
+                                }
+                                exts[_e]++;
+                                window._cache.files.push({
+                                    ...f,
+                                    ext: _e
+                                });
+                            } else {
+                                window._cache.dirs.push(f);
+                            }
+                        });
+                        let _exts = [];
+                        for (let i in exts) {
+                            _exts.push(`${i}(${exts[i]})`);
+                            window._cache.exts.push(i);
+                            window._cache.extMap[i] = `${i}(${exts[i]})`;
+                        }
+                        this.filter.allExt.splice(0,this.filter.allExt.length,..._exts);
+                        this.filter.ext.splice(0,this.filter.ext.length,..._exts);
+                        window.showMessage(`总共获取到文件和文件夹共${files.length}个`);
+                        this.filter.fileCount = files.length;
+                        this.filter.allDirCount = window._cache.dirs.length;
+                        this.filter.allFileCount = window._cache.files.length;
+                    });
+                },
+                checkFileCount() {
+                    let count = 0;// window._cache.files.length + window._cache.dirs.length;
+                    if (!this.filter.noDir) {
+                        count += window._cache.dirs.length;
+                    }
+                    if (!this.filter.noFile) {
+                        count += window._cache.files.length;
+                        window._cache.files.forEach(f => {
+                            if (this.filter.ext.indexOf(window._cache.extMap[f.ext]) === -1) {
+                                count--;
+                            }
+                        });
+                    }
+                    this.filter.fileCount = count;
+                },
+                toggleSelectExt() {
+                    if (this.filter.ext.length !== 0) {
+                        this.filter.ext.splice(0,this.filter.ext.length);
+                    } else {
+                        this.filter.ext.splice(0,0,...this.filter.allExt);
+                    }
+                },
+                renameFiles() {}
+            }
+        })
+    });
+</script>
+</body>
+</html>

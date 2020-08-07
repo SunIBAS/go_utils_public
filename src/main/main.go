@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"public.sunibas.cn/go_utils_public/src/main/InitHttp"
-	_ "public.sunibas.cn/go_utils_public/statik"
 )
 
 func main() {

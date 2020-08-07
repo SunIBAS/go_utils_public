@@ -102,13 +102,12 @@ func ParseRowsDemo(rows * sql.Rows) []DemoEntity {
 	return demos
 }
 
-/*
 func InsertOrUpdate(database * sql.DB,demoTable SqliteSql.Table,entity DemoEntity)  {
 	values,_ := SqliteSql.GetInsertValues(entity,demoTable,entity.Id)
 	insertOrUpdate := demoTable.GetSpecialInsertSql("insertOrUpdate",values)
 	SqliteSql.ExecSqlString(database,insertOrUpdate)
 }
-*/
+
 
 
 type PubWebEntity struct {
@@ -177,6 +176,7 @@ func GetPubWebTable() SqliteSql.Table {
 func ParseRowBySelectPubWeb(database * sql.DB,where string,table SqliteSql.Table) []PubWebEntity{
 	return QueryPubWeb(table.GetSelectSql(where),database)
 }
+
 func QueryPubWeb(sql string,db * sql.DB) []PubWebEntity {
 	if rows,err := db.Query(sql);
 		err == nil {

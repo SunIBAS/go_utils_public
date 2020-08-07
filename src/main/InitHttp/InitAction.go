@@ -7,13 +7,7 @@ import (
 	"public.sunibas.cn/go_utils_public/src/utils/AboutServer"
 )
 
-type actionAtom struct {
-	DearFn func(writer http.ResponseWriter,s string,config MainTools.Config)	`json:"-"`
-	Method string		`json:"method"`
-	Description string	`json:"description"`
-	Params []string		`json:"params"`
-}
-var actions []actionAtom = []actionAtom{
+var actions []MainTools.ActionAtom = []MainTools.ActionAtom{
 	{
 		DearFn:      Apis.Api404Action,
 		Method:      "api404",
@@ -28,6 +22,8 @@ var actions []actionAtom = []actionAtom{
 	},
 }
 func InitAction() {
+	actions = append(actions,Apis.DemoDaoActions...)
+	actions = append(actions,Apis.FileOpActions...)
 	http.HandleFunc("/api", func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Access-Control-Allow-Origin", "*")             //允许访问所有域
 		writer.Header().Add("Access-Control-Allow-Headers", "Content-Type") //header的类型

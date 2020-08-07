@@ -20,4 +20,5 @@ type Config struct {
 	DbPath string `json:"db_path"`
 	Port string `json:"port"`
 	LogPath string `json:"log_path"`
+	NodePath string `json:"node_path"`
 }

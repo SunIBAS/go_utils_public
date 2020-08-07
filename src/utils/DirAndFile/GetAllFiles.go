@@ -41,3 +41,15 @@ func GetAllSubDirOrFile(dirPath string) []FileNode {
 	}
 	return fileNodes
 }
+
+func GetAllSubDirOrFileNotZip(dirPath string) []FileNode {
+	fileNodes := GetSubDirOrFile(dirPath)
+	out := []FileNode{}
+	out = append(out,fileNodes...)
+	for _,fn := range fileNodes {
+		if !fn.File {
+			out = append(out,GetAllSubDirOrFileNotZip(fn.FullPath)...)
+		}
+	}
+	return out
+}
