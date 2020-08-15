@@ -59,8 +59,8 @@
     <div class="layout">
         <Layout style="height: 100vh;width: 100vw;">
             <Sider ref="side1" hide-trigger collapsible :collapsed-width="78" v-model="isCollapsed">
-                <i-menu active-name="0" theme="dark" width="auto" :class="menuitemClasses" @on-select="jump">
-                    <Menu-Item v-for="(m,ind) in menus" :name="ind + ''" :key="ind">
+                <i-menu :active-name="activeName" theme="dark" width="auto" :class="menuitemClasses" @on-select="jump">
+                    <Menu-Item v-for="(m,ind) in menus" :name="ind + ''" :key="ind" :title="m.title">
                         <Icon type="ios-navigate"></Icon>
                         <span>{{m.title}}</span>
                     </Menu-Item>
@@ -69,11 +69,12 @@
             <Layout>
                 <i-header :style="{padding: 0,background: '#2d8cf0'}" class="layout-header-bar">
                     <Icon @click.native="collapsedSider" :class="rotateIcon" :style="{margin: '0 20px',color:'white'}" type="md-menu" size="24"></Icon>
+                    <span style="color: white;font-weight: bold;font-size: 19px;">{{title}}</span>
                     <Icon @click.native="refresh" :style="{'line-height':'64px',float:'right',margin: '0 20px',color:'white'}" type="md-refresh" size="24"></Icon>
                     <Icon  :style="{'line-height':'64px',float:'right',margin: '0 20px',color:'white'}" type="md-contract" size="24"></Icon>
                 </i-header>
                 <i-content :style="{background: '#fff'}">
-                    <iframe id="ifr" style="width: 100%;height: 100%;" :src="menus[0].link" frameborder="0"></iframe>
+                    <iframe id="ifr" style="width: 100%;height: 100%;" src="" frameborder="0"></iframe>
                 </i-content>
             </Layout>
         </Layout>
@@ -81,6 +82,14 @@
 </template>
 <script>
     const menus = [
+        {
+            title: "GES DISC 文件下载",
+            link: "./GES_DISC_DOWNLOAD.html"
+        },
+        {
+            title: "附加文件管理",
+            link: "./records.html"
+        },
         {
             title: "文件操作",
             link: "./fileOp.html"
@@ -101,11 +110,13 @@
     injectIviewCore(function () {
         let ifr = null;
         console.log('load');
-        let vueInstance = new Vue({
+        window.vueInstance = new Vue({
             el: '#app',
             data: {
                 isCollapsed: false,
-                menus
+                menus,
+                activeName: '-1',
+                title: ''
             },
             computed: {
                 rotateIcon () {
@@ -129,11 +140,31 @@
                     ifr.contentWindow.location.reload()
                 },
                 jump(ind) {
+                    if (ifr.src.length > 0 && this.activeName == ind) {
+                        return;
+                    }
+                    this.title = this.menus[ind].title;
                     ifr.src = this.menus[ind].link;
+                    location.hash = this.menus[ind].link;
+                    this.activeName = ind + '';
                 }
             },
             mounted() {
                 ifr = document.getElementById("ifr");
+                let link = location.hash.substring(1);
+                let $this = this;
+                let ok = false;
+                this.menus.forEach((l,ind) => {
+                    if (l.link === link) {
+                        $this.jump(ind);
+                        $this.activeName = '' + ind;
+                        ok = true;
+                    }
+                });
+                if (!ok) {
+                    this.jump(0);
+                    this.activeName = 0 + '';
+                }
             }
         });
         window.loading = function () {
@@ -142,6 +173,7 @@
         window.closeLoading = function () {
             vueInstance.$Spin.hide();
         };
+        window.showMessageType = {success: "success",warning: "warning",error: "error"};
         window.showMessage = function (msg,type) {
             if (!["success","warning","error"].includes(type)) {
                 type = "success";

@@ -73,6 +73,7 @@ const injectIviewCore = function (cb) {
             "pubweb.js",
             "Actions.js",
             "index.js",
+            "FileSaver.min.js",
         ].map(_ => window.sourceIP + "/Request/" + _)
     ];
     const baseSource = [
@@ -88,8 +89,47 @@ const injectIviewCore = function (cb) {
             window.loading = window.parent.loading;
             window.closeLoading = window.parent.closeLoading;
             window.showMessage = window.parent.showMessage;
+            window.showMessageType = window.parent.showMessageType;
+            window.saveFile = window.parent.saveFile;
+            window.inputDialog = window.parent.inputDialog;
         } else {
             window.RequestInstance(baseIP);
+            window.saveFile = function (str,filename,type) {
+                const blob = new Blob([str], { type: type || "" });
+                if (!filename) {
+                    filename = (new Date().getTime()) + ".txt";
+                }
+                saveAs(blob,filename);
+            };
+            window.inputDialog = function ($this,placeholder,cb,defaultValue,title) {
+                let inpVal = "";
+                let change = false;
+                defaultValue = defaultValue || "";
+                $this.$Modal.confirm({
+                    render: (h) => {
+                        return h('div',[
+                            h('div',{},title || "请输入"),
+                            h('Input', {
+                                props: {
+                                    value: defaultValue,
+                                    autofocus: true,
+                                    placeholder: placeholder || 'Please enter something'
+                                },
+                                on: {
+                                    input: (val) => {
+                                        inpVal = val;
+                                        change = true;
+                                    }
+                                }
+                            })
+                        ]);
+                    },
+                    onOk() {
+                        //$this.$Modal.remove();
+                        cb(change ? inpVal : defaultValue);
+                    }
+                })
+            }
         }
         cb();
     },[

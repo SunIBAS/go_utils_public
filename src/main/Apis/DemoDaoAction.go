@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-var tableName = "demo"
+var demoTableName = "demo"
 var DemoDaoActions []MainTools.ActionAtom = []MainTools.ActionAtom{
 	{
 		DearFn:      InsertDemo,
@@ -91,7 +91,7 @@ func ListDemo(writer http.ResponseWriter,s string,config MainTools.Config)  {
 	} else {
 		offset := page.Count * page.Page
 		demos := Sqls.ParseRowBySelectDemo(config.DB,where + " limit " + strconv.Itoa(page.Count) + " offset " + strconv.Itoa(offset),
-			config.Tables[tableName])
+			config.Tables[demoTableName])
 		rObj.SetContent(demos).SetSuccess("").Send(writer)
 	}
 }
@@ -105,7 +105,7 @@ func InsertDemo(writer http.ResponseWriter,s string,config MainTools.Config) {
 	} else {
 		demo.CreateTime = strconv.FormatInt(time.Now().UnixNano(),10)
 		demo.Lang = strings.ToUpper(demo.Lang)
-		sql,_ := SqliteSql.GetInsertSql(demo,config.Tables[tableName])
+		sql,_ := SqliteSql.GetInsertSql(demo,config.Tables[demoTableName])
 		SqliteSql.ExecSqlString(config.DB,sql)
 		rObj.SetSuccess("插入成功").Send(writer)
 	}
@@ -119,9 +119,9 @@ func UpdateDemo(writer http.ResponseWriter,s string,config MainTools.Config) {
 		rObj.SetFail("参数解析错误，err:" + err.Error()).Send(writer)
 	} else {
 		if demo.Id != "" {
-			demos := Sqls.ParseRowBySelectDemo(config.DB," where id='" + demo.Id + "'",config.Tables[tableName])
+			demos := Sqls.ParseRowBySelectDemo(config.DB," where id='" + demo.Id + "'",config.Tables[demoTableName])
 			if len(demos) == 1 {
-				Sqls.InsertOrUpdate(config.DB,config.Tables[tableName],demo)
+				demo.InsertOrUpdate(config.DB,config.Tables[demoTableName])
 				rObj.SetSuccess("插入成功").Send(writer)
 			} else {
 				rObj.SetFail("找不到对应记录").Send(writer)
@@ -139,13 +139,13 @@ func GetByDemoId(writer http.ResponseWriter,s string,config MainTools.Config) {
 	if err != nil {
 		rObj.SetFail("参数解析错误，err:" + err.Error()).Send(writer)
 	} else {
-		demos := Sqls.ParseRowBySelectDemo(config.DB," where id='" + demo.Id + "'",config.Tables[tableName])
+		demos := Sqls.ParseRowBySelectDemo(config.DB," where id='" + demo.Id + "'",config.Tables[demoTableName])
 		rObj.SetContent(demos).SetSuccess("").Send(writer)
 	}
 }
 
 func GetDemoCount(writer http.ResponseWriter,s string,config MainTools.Config) {
-	count := SqliteSql.QueryCount(tableName,config.DB)
+	count := SqliteSql.QueryCount(demoTableName,config.DB)
 	rObj := AboutServer.ReturnObj{}
 	rObj.SetStringContent(strconv.Itoa(count)).SetSuccess("").Send(writer)
 }
@@ -157,7 +157,7 @@ func DeleteDemo(writer http.ResponseWriter,s string,config MainTools.Config) {
 	if err != nil {
 		rObj.SetFail("参数解析错误，err:" + err.Error()).Send(writer)
 	} else {
-		var sql = "delete from " + tableName + " where `id`='" + demo.Id + "'"
+		var sql = "delete from " + demoTableName + " where `id`='" + demo.Id + "'"
 		SqliteSql.ExecSqlString(config.DB,sql)
 		rObj.SetStringContent("删除成功").SetSuccess("").Send(writer)
 	}
@@ -170,7 +170,7 @@ func RunDeom(writer http.ResponseWriter,s string,config MainTools.Config) {
 	if err != nil {
 		rObj.SetFail("参数解析错误，err:" + err.Error()).Send(writer)
 	} else {
-		demos := Sqls.ParseRowBySelectDemo(config.DB," where id='" + demo.Id + "'",config.Tables[tableName])
+		demos := Sqls.ParseRowBySelectDemo(config.DB," where id='" + demo.Id + "'",config.Tables[demoTableName])
 		if len(demos) == 1 {
 			demo = demos[0]
 			demo.Lang = strings.ToLower(demo.Lang)

@@ -20,10 +20,21 @@ var actions []MainTools.ActionAtom = []MainTools.ActionAtom{
 		Description: "获取请求代码",
 		Params:		 []string{},
 	},
+	{
+		DearFn: func(writer http.ResponseWriter, s string, config MainTools.Config) {
+			InitSourcesFromDB()
+			rObj := AboutServer.ReturnObj{}
+			rObj.SetSuccess("").Send(writer)
+		},
+		Method:		"InitSourcesFromDB",
+		Description:"从数据库初始化文件",
+		Params: 	[]string{},
+	},
 }
 func InitAction() {
 	actions = append(actions,Apis.DemoDaoActions...)
 	actions = append(actions,Apis.FileOpActions...)
+	actions = append(actions,Apis.RecordsDaoActions...)
 	http.HandleFunc("/api", func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Access-Control-Allow-Origin", "*")             //允许访问所有域
 		writer.Header().Add("Access-Control-Allow-Headers", "Content-Type") //header的类型

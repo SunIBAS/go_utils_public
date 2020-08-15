@@ -34,7 +34,7 @@ func InitHttp(configPath string) {
 	InitSocket()
 	// 挂载网页 /pubWeb/
 	InitPubWeb()
-	InitSources(config.CwdPath,statikFS)
+	InitSourcesFromDB()
 	srv := &http.Server{
 		Addr:           config.Port,
 		Handler:        nil,

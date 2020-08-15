@@ -51,13 +51,11 @@ func ParseRows{EntityName}(rows * sql.Rows) []{EntityName}Entity {
 \treturn {entityName}s
 }
 
-/*
-func InsertOrUpdate(database * sql.DB,{entityName}Table SqliteSql.Table,entity {EntityName}Entity)  {
+func (entity {EntityName}Entity)InsertOrUpdate(database * sql.DB,{entityName}Table SqliteSql.Table)  {
 \tvalues,_ := SqliteSql.GetInsertValues(entity,{entityName}Table,entity.Id)
 \tinsertOrUpdate := {entityName}Table.GetSpecialInsertSql("insertOrUpdate",values)
 \tSqliteSql.ExecSqlString(database,insertOrUpdate)
 }
-*/
 `;
 let out = ``;
 db.forEach(table => {
@@ -135,10 +133,9 @@ import (
 
 `;
 
-let footTpl = `// 本质上讲，这个软件不应该包含 office 文档问题提取功能的，
-// 或者说不应该是主体功能，但是鉴于这部分功能需要使用到上面定义的数据库
-// 只能勉为其难的将这部分写到项目里面，其实不应该写进来的
-// 另外一个声明就是，这部分的代码将直接使用 sql 不再写类似 modal 和 dao 的部分
+let footTpl = `// 启动前调用该方法
+// db,tables := Init("") // <- 保存好这两个变量，后面的数据库操作都需要用到他们
+// defer db.Close()
 func Init(dbPath string) (* sql.DB , map[string]SqliteSql.Table) {
 \ttables := map[string]SqliteSql.Table{}
 \tvar langTablesCreater map[string]func()SqliteSql.Table

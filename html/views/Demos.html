@@ -163,11 +163,14 @@
                         this.params.description)
                     .then(_ => {
                         if (_.length === 0) {
+                            if ($this.params.page === 0) {
+                                $this.data.splice(0,$this.data.length);
+                                return;
+                            }
                             $this.params.page--;
                             $this.$Message.info('已经是最后一页了');
                             return;
                         }
-                        $this.data.splice(0,$this.data.length,..._);
                     });
                 },
                 addDemo() {

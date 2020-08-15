@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <title>API</title>
     <script src="./../base.js?"></script>
+    <style>
+        .add-code .ivu-tag-dot-inner {
+            display: none;
+        }
+        .only-show-code textarea {
+            background: white !important;color: black !important;
+        }
+        .tag-no-dot .ivu-tag-dot-inner {
+            display: none;
+        }
+        .tag-selected {
+            border-color: #2d8cf0 !important;
+        }
+    </style>
 </head>
 <body>
 <template id="app">
@@ -32,14 +46,111 @@
         </div>
         <div style="padding-top: 10px">
             <Alert>动作
-                <i-button type="info" @click="renameFiles">重命名</i-button>
-                <i-button type="warning">修改所在位置</i-button>
-                <i-button type="error">删除</i-button>
+                <i-button type="info" @click="actionFiles">自定义动作</i-button>
+                <i-button type="warning" @click="moveFilesTo">将选中文件移动到同一个位置</i-button>
+                <!--<i-button type="error" @click="removeFile">删除选定的文件和文件夹</i-button>-->
             </Alert>
         </div>
+        <div v-show="move.moveNameRep">
+            <div>
+                下面是同名文件，需要修改名称，如果想要忽略文件（即不复制）则文件名为空，同名将不被复制
+                <div style="margin: 5px 0">
+                    <i-button @click="moveFilesTo2">重新生成命令</i-button>
+                    <i-button @click="move.moveNameRep = false">关闭这个部分</i-button>
+                </div>
+            </div>
+            <i-table row-key="id" :columns="move.columns" :data="move.datas" border></i-table>
+        </div>
+        <div v-show="action.show">
+            <!--<div>-->
+            <div style="padding-top: 5px;">
+                <i-button @click="action.showAllScript=true" type="primary">选择其他脚本</i-button>
+                <i-button @click="runAction" type="info">运行</i-button>
+            </div>
+            <div style="padding-top: 5px;">
+                当前选择脚本 <Tag type="dot" color="primary">{{action.types[action.actionTypeIndex].Label}}</Tag>
+            </div>
+            <i-input class="only-show-code" disabled autosize style="padding-top: 5px;" v-model="action.Content" type="textarea" placeholder="代码。。。"></i-input>
+        </div>
+        <Modal :footer-hide="true" v-model="action.showAllScript" fullscreen>
+            <div v-if="!action.edit.show">
+                <div style="padding-bottom: 5px;">
+                    <i-button type="text" icon="ios-arrow-back" style="color: rgb(45, 140, 240)"
+                              @click="action.showAllScript=false">返回</i-button>
+                </div>
+                <Tag type="dot" color="success" class="add-code" style="cursor: pointer;" @click.native="updateRecodes(false)">
+                    <Icon type="md-add"></Icon> 添加脚本
+                </Tag>
+                <Tag v-for="(t,ind) in action.types" type="dot" @click.native="changeAction(ind)"
+                     :style="{cursor:'pointer','border-color': action.actionTypeIndex != ind ? '#e8eaec':'#2d8cf0 !important'}"
+                     :class="action.actionTypeIndex != ind ? 'tag-no-dot' : ''"
+                     color="primary">
+                    {{t.Label}}
+                </Tag>
+                <div>
+                    <div style="color: #2d8cf0;cursor:pointer;padding-top: 4px;" @click="updateRecodes(true)">修改代码</div>
+                    <div style="padding-top: 5px;" v-html="action.types[action.actionTypeIndex].Description.replace(/\n/g,'<br/>')"></div>
+                </div>
+            </div>
+            <div v-else>
+                <i-button type="text" icon="ios-arrow-back" style="color: rgb(45, 140, 240)"
+                          @click="action.edit.show=false">返回</i-button>
+                <Row>
+                    <i-col span="2">名称：</i-col>
+                    <i-col span="22">
+                        <i-input v-model="action.edit.Label" placeholder="名称" :rows="15"/>
+                    </i-col>
+                </Row><br/>
+                <Row>
+                    <i-col span="24">默认使用 4 个空格作为缩进，不然我的格式化代码会出现问题</i-col>
+                </Row>
+                <Row>
+                    <i-col span="2">代码：</i-col>
+                    <i-col span="22">
+                        <i-input @change.native="codeChange" v-model="action.edit.Content" type="textarea" placeholder="代码" :rows="15"/>
+                    </i-col>
+                </Row><br/>
+                <Row>
+                    <i-col span="2">描述：</i-col>
+                    <i-col span="22">
+                        <i-input v-model="action.edit.Description" type="textarea" placeholder="描述" :rows="3"/>
+                    </i-col>
+                </Row><br/>
+                <Row>
+                    <i-col offset="2" span="20">
+                        <i-button @click="subRecords" type="primary">提交</i-button>
+                        <i-button @click="showParamsFormat" type="info">查看参数格式</i-button>
+                        <i-button @click="showMethod" type="info">查看可用的方法</i-button>
+                    </i-col>
+                </Row>
+            </div>
+        </Modal>
     </div>
 </template>
 <script>
+    /**
+     * spn 每个\t对应的空格数
+     * cut 删除多余\t数量
+     * */
+    window.___sp___ = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
+    String.prototype.formatCode = function (spn,cut) {
+        let str = this;
+        return str.split('\n').map(line => {
+            let _spn = (line.match(/^[ ]+/) || [''])[0].length;
+            if (_spn) {
+                // 换算成 \t 的数量并减去 cut
+                let __spn = parseInt(_spn / spn) - cut;
+                if (__spn === 0) {
+                    return line.substring(_spn);
+                } else {
+                    return window.___sp___.substring(0,__spn) + line.substring(_spn);
+                }
+            } else {
+                return line;
+            }
+        }).join('\n');
+    };
+
     injectIviewCore(function () {
         console.log('load');
         window._cache = {
@@ -47,6 +158,9 @@
             dirs: [],
             exts: [],
             extMap: {},
+            savePath: "",
+            names: {},
+            sameNames: {}
         };
         let getExt = name => {
             let e = name.split('.');
@@ -55,8 +169,9 @@
         window.$vue = new Vue({
             el: '#app',
             data: {
+                // path: "H:\\temp\\testone",
                 path: "C:\\Users\\HUZENGYUN\\Documents\\git\\java\\abcdefg",
-                child: false,
+                child: true,
                 filter: {
                     noDir: false,
                     allDirCount: 0,
@@ -65,6 +180,90 @@
                     ext: [],
                     allExt: [],
                     fileCount: 0
+                },
+                move: {
+                    moveNameRep: false,
+                    columns: [
+                        {
+                            type: 'index',
+                            width: 60,
+                            align: 'center'
+                        },
+                        {
+                            title: '原文件名',
+                            key: 'Name',
+                            tree: true
+                        },
+                        {
+                            title: '路径',
+                            key: 'FullPath'
+                        },
+                        {
+                            title: '新文件名',
+                            key: 'action',
+                            // width: 150,
+                            align: 'center',
+                            render: (h, params) => {
+                                if (params.row.id.startsWith("@")) {
+                                    return h("div",{},"文件名为空时表示放弃该文件");
+                                } else {
+                                    return h('div',[
+                                        h('Input', {
+                                            props: {
+                                                value: params.row.Name,
+                                                autofocus: true,
+                                                placeholder: '请输入新文件名'
+                                            },
+                                            on: {
+                                                input: (val) => {
+                                                    if (val && val in window._cache.names && val !== params.row.sname) {
+                                                        window.showMessage("该文件名已被使用",window.showMessageType.warning);
+                                                    } else {
+                                                        params.row.Name = val;
+                                                    }
+                                                }
+                                            },
+                                            attrs: {
+                                                style: 'width: calc(100% - 50px);'
+                                            }
+                                        }),
+                                        h('Button',{
+                                            props: {
+                                                type: 'error',
+                                                size: 'small'
+                                            },
+                                            on: {
+                                                click() {
+                                                    params.row.Name = "";
+                                                }
+                                            },
+                                            attrs: {
+                                                style: "margin-left: 2px;"
+                                            }
+                                        },"忽略")
+                                    ]);
+                                }
+                            }
+                        }
+                    ],
+                    datas: []
+                },
+                getFileFlag: false,
+                action: {
+                    show: false,
+                    actionTypeIndex: 0,
+                    types: [
+                        { Label: "自定义",Content: "",Description: "暂时无代码可用，请自行定义" },
+                    ],
+                    Content: "",
+                    showAllScript: false,
+                    edit: {
+                        show: false,
+                        Id: "",
+                        Label: "",
+                        Description: "",
+                        Content: ""
+                    }
                 }
             },
             methods: {
@@ -84,7 +283,8 @@
                                 exts[_e]++;
                                 window._cache.files.push({
                                     ...f,
-                                    ext: _e
+                                    ext: _e,
+                                    Path: f.FullPath.substring(0,f.FullPath.length - f.Name.length)
                                 });
                             } else {
                                 window._cache.dirs.push(f);
@@ -102,6 +302,7 @@
                         this.filter.fileCount = files.length;
                         this.filter.allDirCount = window._cache.dirs.length;
                         this.filter.allFileCount = window._cache.files.length;
+                        this.getFileFlag = true;
                     });
                 },
                 checkFileCount() {
@@ -126,7 +327,253 @@
                         this.filter.ext.splice(0,0,...this.filter.allExt);
                     }
                 },
-                renameFiles() {}
+                actionFiles() {
+                    if (!this.getFileFlag) {
+                        window.showMessage("请先获取文件",window.showMessageType.error);
+                        return;
+                    }
+                    this.move.moveNameRep = false;
+                    this.action.show = true;
+                },
+                moveFilesTo() {
+                    if (!this.getFileFlag) {
+                        window.showMessage("请先获取文件",window.showMessageType.error);
+                        return;
+                    }
+                    if (this.filter.noFile) {
+                        window.showMessage("没有选中任何文件",window.showMessageType.error);
+                    } else {
+                        let savePath = "";
+                        window.inputDialog(this,"请输入保存位置",(p) => {
+                            if (!(p[p.length - 1] == "\\" || p[p.length - 1] == "/")) {
+                                p += "\\";
+                            }
+                            savePath = p;
+                            let moveCmd = "";
+                            let names = {};
+                            let sameNames = {
+                                _count_: 0
+                            };
+                            window._cache.files.forEach(f => {
+                                if (this.filter.ext.indexOf(window._cache.extMap[f.ext]) !== -1) {
+                                    if (f.Name in names) {
+                                        names[f.Name].push(f);
+                                        sameNames[f.Name] = true;
+                                        sameNames._count_++;
+                                    } else {
+                                        names[f.Name] = [f];
+                                    }
+                                }
+                            });
+                            if (sameNames._count_) {
+                                // 存在同名的
+                                window._cache["savePath"] = savePath;
+                                window._cache["names"] = names;
+                                window._cache["sameNames"] = sameNames;
+                                this.move.datas.splice(0,this.move.datas.length);
+                                for (let i in sameNames) {
+                                    if (i === "_count_") continue;
+                                    let children = [];
+                                    names[i].forEach((n,ind) => {
+                                        children.push({
+                                            id: n.Name + "-" + ind,
+                                            ...n,
+                                            sname: n.Name
+                                        });
+                                    });
+                                    this.move.datas.push({
+                                        id: "@" + names[i][0].Name,
+                                        Name: names[i][0].Name,
+                                        children
+                                    });
+                                }
+                                this.move.moveNameRep = true;
+                                this.action.show = false;
+                            } else {
+                                for (let i in names) {
+                                    moveCmd += `move "${names[i].FullPath}" "${savePath}${names[i].Name}"\r\n`
+                                }
+                                window.saveFile(moveCmd);
+                            }
+                        },"H:\\temp\\testtwo","请输入保存路径");
+                    }
+                },
+                moveFilesTo2() {
+                    let moveCmd = "";
+                    let savePath = window._cache.savePath;
+                    let names = window._cache.names;
+                    for (let i in names) {
+                        if (i in window._cache.sameNames) {} else {
+                            moveCmd += `move "${names[i][0].FullPath}" "${savePath}${names[i][0].Name}"\r\n`
+                        }
+                    }
+                    this.move.datas.forEach(d => {
+                        d.children.forEach(f => {
+                            if (f.Name) {
+                                moveCmd += `move "${f.FullPath}" "${savePath}${f.Name}"\r\n`
+                            }
+                        });
+                    });
+                    window.saveFile(moveCmd);
+                },
+                // removeFile() {
+                //     if (!this.getFileFlag) {
+                //         window.showMessage("请先获取文件",window.showMessageType.error);
+                //         return;
+                //     }
+                //     let delCmds = "";
+                //     if (!this.filter.noFile) {
+                //         window._cache.files.forEach(f => {
+                //             if (this.filter.ext.indexOf(window._cache.extMap[f.ext]) !== -1) {
+                //                 delCmds += `del "${f.FullPath}"\r\n`
+                //             }
+                //         });
+                //     }
+                //     if (!this.filter.noDir) {
+                //         _cache.dirs.forEach(dir => {
+                //             delCmds += `rd /S /Q "${dir.FullPath}"\r\n`;
+                //         });
+                //     }
+                //     if (delCmds.length) {
+                //         window.saveFile(delCmds,(new Date().getTime()) + ".txt");
+                //     } else {
+                //         window.showMessage("没有选中任何文件或文件夹",window.showMessageType.error);
+                //     }
+                // },
+                // 显示参数说明
+                showParamsFormat() {
+                    let params = [
+                        {
+                            "Name": "a.txt",
+                            "File": true,
+                            "FullPath": "C:\\Users\\Administrator\\Documents\\a.txt",
+                            "Child": null,
+                            "Path": "C:\\Users\\Administrator\\Documents\\",
+                            "ext": ".txt"
+                        },{
+                            "Name": "文件名",
+                            "File": "true 表示文件，false 表示文件夹",
+                            "FullPath": "完整路径含文件名",
+                            "Child": null,
+                            "Path": "完整路径",
+                            "ext": "扩展名"
+                        }
+                    ];
+                    let content = JSON.stringify(params,'','\t').split('\n').map(_ => `<p>${_}</p>`).join('\n').replace(/\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+                    this.$Modal.info({
+                        title: '参数格式：',
+                        content: "<p><p><span style='padding:0 2px;color:red;'>files</span>和<span style='padding:0 2px;color:red;'>dirs</span>的格式都如下所示，只是dir没有ext和Path</p>" + content + "</p>",
+                        width: "600",
+                    });
+                },
+                // 显示可用的方法
+                showMethod() {
+                    this.$Modal.info({
+                        title: '参数格式：',
+                        content: `<p>
+<p>window.saveFile(str,name,type)</p>
+<p>\tstr       要保存的文字</p>
+<p>\tname  文件名，可不传，默认为 时间戳.txt</p>
+<p>\ttype    文件类型，是一个 mineType</p>
+<p>window.showMessage(str,type)</p>
+<p>\tstr       显示的文字</p>
+<p>\ttype    消息类型，可以有"success","info","error"</p>
+</p>`.replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;").replace(/ /g,'&nbsp;'),
+                        width: "600",
+                    });
+                },
+                runAction() {
+                    if (!this.getFileFlag) {
+                        window.showMessage("请先获取文件",window.showMessageType.error);
+                        return;
+                    }
+                    let act = eval("___tmp___ = " + this.action.Content);
+                    let files = [];
+                    if (!this.filter.noFile) {
+                        window._cache.files.forEach(f => {
+                            files.push(f);
+                        });
+                    }
+                    act(files,this.filter.noDir ? [] : window._cache.dirs);
+                },
+                changeAction(ind) {
+                    // console.log(ind);
+                    this.action.actionTypeIndex = ind;
+                    this.action.Content = this.action.types[ind].Content;
+                },
+                // 更新 record ，如果 update = false 则是添加
+                updateRecodes(update) {
+                    let act = this.action.types[this.action.actionTypeIndex];
+                    if (update) {
+                        for (let i in act) {
+                            this.action.edit[i] = act[i];
+                        }
+                    } else {
+                        for (let i in act) {
+                            this.action.edit[i] = "";
+                        }
+                    }
+                    this.action.edit.show = true;
+                },
+                // 提交 record 修改或添加
+                subRecords() {
+                    let $this = this;
+                    if (this.action.edit.Id) {
+                        // 更新
+                        RequestInstance.action.FileActionRecords.UpdateRecords(this.action.edit.Id,{
+                            Label: this.action.edit.Label,
+                            Description: this.action.edit.Description,
+                            Content: this.action.edit.Content
+                        }).then(() => {
+                            let ind = -1;
+                            $this.action.types.forEach((a,i) => {
+                                if (a.Id === $this.action.edit.Id) {
+                                    ind = i;
+                                }
+                            });
+                            if (ind !== -1) {
+                                for (let i in $this.action.types[ind]) {
+                                    $this.action.types[ind][i] = $this.action.edit[i];
+                                }
+                            }
+                            window.showMessage("修改成功",window.showMessageType.success);
+                        });
+                    } else {
+                        // 添加
+                        RequestInstance.action.FileActionRecords.InsertRecords({
+                            Label: this.action.edit.Label,
+                            Description: this.action.edit.Description,
+                            Content: this.action.edit.Content
+                        }).then(Id => {
+                            $this.action.types.push({
+                                Id,
+                                Label: this.action.edit.Label,
+                                Description: this.action.edit.Description,
+                                Content: this.action.edit.Content
+                            });
+                            window.showMessage("插入成功",window.showMessageType.success);
+                        });
+                    }
+                },
+                codeChange() {
+                    this.action.edit.Content = this.action.edit.Content.formatCode(4,0);
+                }
+            },
+            mounted() {
+                let $this = this;
+                RequestInstance.action.FileActionRecords.ListRecords(0,100).then(rec => {
+                    rec.forEach(r => {
+                        let r_ = JSON.parse(r.Content);
+                        $this.action.types.push({
+                            ...r_,
+                            Id: r.Id
+                        });
+                    });
+                    if (rec.length) {
+                        $this.action.types.splice(0,1);
+                        $this.changeAction(0);
+                    }
+                });
             }
         })
     });

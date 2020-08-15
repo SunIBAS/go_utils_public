@@ -1,34 +1,32 @@
 package InitHttp
 
 import (
-	"io/ioutil"
-	"log"
-	"net/http"
+	"encoding/json"
+	"public.sunibas.cn/go_utils_public/src/Datas"
+	"public.sunibas.cn/go_utils_public/src/main/Sqls"
 	"public.sunibas.cn/go_utils_public/src/utils/DirAndFile"
 )
 
-func InitSources(root string,statikFS http.FileSystem)  {
-	files := []string {
-		"Resources\\Nodejs\\formatNumber.js",
-		"Resources\\Nodejs\\getDays.js",
-	}
-	for _,f := range files {
-		writeToFile(root,f,statikFS)
-	}
-	DirAndFile.CreateFileBeforeCheckAndCreate(root + "tmp\\test.txt")
+type fileRec struct {
+	FileName string `json:"FileName"`
+	Content string `json:"Content"`
 }
+func InitSourcesFromDB() {
+	records := Sqls.ParseRowBySelectRecords(config.DB," where `tag`='files'",config.Tables["records"])
+	var fr fileRec
+	// config.CwdPath
+	for _,rec := range records {
+		err := json.Unmarshal([]byte(Datas.DecodeBase64AndURI(rec.Content)),&fr)
+		filename := config.CwdPath + DirAndFile.Filepath_Separator + fr.FileName
+		if err == nil {
+			if t,e := DirAndFile.CheckTypeAndExist(filename);
+				e == nil {
+					if t == 0 {
+						// 只有这种情况时创建文件
+						DirAndFile.WriteWithIOUtil(filename,fr.Content)
+					}
+			}
+		}
 
-func writeToFile(root,filename string,statikFS http.FileSystem)  {
-	fullPath := root + filename
-	DirAndFile.CreateFileBeforeCheckAndCreate(fullPath)
-	r, err := statikFS.Open("\\" + filename)
-	if err != nil {
-		log.Fatal(err)
 	}
-	defer r.Close()
-	contents, err := ioutil.ReadAll(r)
-	if err != nil {
-		log.Fatal(err)
-	}
-	DirAndFile.WriteWithIOUtil(fullPath,string(contents))
 }

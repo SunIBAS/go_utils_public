@@ -59,8 +59,7 @@
             "CreateIndex": "CREATE INDEX if not exists 'demo_id' ON 'demo' ( 'id' ASC );"
         },
         "description": {
-            "1": "id 是 uuid，src 是原本的文本内容，dist 是翻译结构",
-            "2": "bak1 和 bak2 是如果有其他需要翻译的内容，可以设置"
+            "1": "id 是 uuid"
         }
     },
     {
@@ -122,8 +121,76 @@
         "sql": {
         },
         "description": {
-            "1": "id 是 uuid，src 是原本的文本内容，dist 是翻译结构",
-            "2": "bak1 和 bak2 是如果有其他需要翻译的内容，可以设置"
+            "1": "id 是 uuid"
+        }
+    },
+    {
+        "TableName": "records",
+        "entityName": "records",
+        "EntityName": "Records",
+        "note": "存储任意内容",
+        "fields": [
+            {
+                "Name": "id",
+                "Type": "TEXT",
+                "Primary": true,
+                "Note": "",
+                "_type": "string"
+            },
+            {
+                "Name": "tag",
+                "Type": "TEXT",
+                "Note": "标记（可以用来区分存储的内容是什么）",
+                "_type": "string"
+            },
+            {
+                "Name": "content",
+                "Type": "TEXT",
+                "Note": "存储内容(base64)",
+                "_type": "string"
+            },
+            {
+                "Name": "createTime",
+                "Type": "TEXT",
+                "Note": "创建时间",
+                "_type": "string"
+            },
+            {
+                "Name": "field1",
+                "Type": "TEXT",
+                "Note": "字段一",
+                "_type": "string"
+            },
+            {
+                "Name": "field2",
+                "Type": "TEXT",
+                "Note": "字段二",
+                "_type": "string"
+            },
+            {
+                "Name": "field3",
+                "Type": "TEXT",
+                "Note": "字段三",
+                "_type": "string"
+            },
+            {
+                "Name": "bak1",
+                "Type": "TEXT",
+                "Note": "备用1",
+                "_type": "string"
+            },
+            {
+                "Name": "bak2",
+                "Type": "TEXT",
+                "Note": "备用2",
+                "_type": "string"
+            }
+        ],
+        "sql": {
+            "CreateIndex": "CREATE INDEX if not exists 'records_id' ON 'records' ( 'id' ASC );"
+        },
+        "description": {
+            "1": "id 是 uuid"
         }
     },
     {

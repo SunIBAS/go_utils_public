@@ -6,7 +6,7 @@ let pubWeb = class {
     list(page,count) {
         return this.toFetch.setContent(JSON.stringify({page,count}))
             .setMethod("list")
-            .Post();
+            .PostParse();
     }
     // dir 电脑的路径
     // perpath 访问前缀
@@ -18,6 +18,17 @@ let pubWeb = class {
     checkUrl(perpath) {
         return this.toFetch.setContent(JSON.stringify({perpath}))
             .setMethod("checkUrl")
+            .Post();
+    }
+    delete(id,perpath) {
+        return this.toFetch.setContent(JSON.stringify({id,perpath}))
+            .setMethod("delete")
+            .Post();
+    }
+    run(perpath,dir) {
+        return this.toFetch
+            .setContent({perpath,dir})
+            .setMethod("run")
             .Post();
     }
 };

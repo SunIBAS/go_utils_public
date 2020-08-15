@@ -1,4 +1,4 @@
-Actions = (function() {
+const Actions = (function() {
     class DemoAction{
         constructor(toFetch,b64str) {
             this.toFetch = toFetch;
@@ -40,7 +40,7 @@ Actions = (function() {
                 .then(arr => {
                     return arr.map(demo => {
                         $this.date.setTime(demo.CreateTime.substring(0,13));
-                        demo.content = this.b64str.decode(demo.Content);
+                        demo.Content = this.b64str.decode(demo.Content);
                         demo.CreateTime = `${$this.date.getFullYear()}-${$this.date.getMonth() + 1}-${$this.date.getDate()}#${$this.date.getHours()}:${$this.date.getMinutes()}:${$this.date.getSeconds()}`;
                         return demo;
                     });
@@ -83,6 +83,75 @@ Actions = (function() {
         }
     }
 
+    class RecordsAction {
+        constructor(toFetch,b64str,tag) {
+            this.toFetch = toFetch;
+            this.b64str = b64str;
+            this.date = new Date();
+            this.tag = tag;
+        }
+
+        // new Promise(s => s(id))
+        InsertRecords(content,field1,field2,field3) {
+            return this.toFetch
+                .setMethod("InsertRecords")
+                .setContent(JSON.stringify({tag: this.tag,content: this.b64str.encode(content),field1,field2,field3,}))
+                .Post()
+                .then(_ => {
+                    return _.Content;
+                });
+        }
+
+        UpdateRecords(id,content,field1,field2,field3) {
+            if (!id) {  window.showMessage("id 为空","error"); return; }
+            return this.toFetch
+                .setMethod("UpdateRecords")
+                .setContent(JSON.stringify({id,content: this.b64str.encode(content),field1,field2,field3,tag: this.tag}))
+                .Post();
+        }
+
+        ListRecords(page,count,field1,field2,field3) {
+            let params = {
+                page: typeof page === "number" ? page : 0,
+                count: typeof count === "number" ? count : 10,
+                other: JSON.stringify({
+                    tag: this.tag,
+                    ...(field1 ? {field1} : {}),
+                    ...(field2 ? {field2} : {}),
+                    ...(field3 ? {field3} : {}),
+                })
+            };
+            let $this = this;
+            return this.toFetch
+                .setMethod("ListRecords")
+                .setContent(JSON.stringify(params))
+                .PostParse()
+                .then(arr => {
+                    return arr.map(record => {
+                        $this.date.setTime(record.CreateTime.substring(0,13));
+                        record.Content = this.b64str.decode(record.Content);
+                        record.CreateTime = `${$this.date.getFullYear()}-${$this.date.getMonth() + 1}-${$this.date.getDate()}#${$this.date.getHours()}:${$this.date.getMinutes()}:${$this.date.getSeconds()}`;
+                        return record;
+                    });
+                });
+        }
+
+        GetRecordsCount() {
+            return this.toFetch
+                .setMethod("GetRecordsCount")
+                .setContent(JSON.stringify({}))
+                .Post();
+        }
+
+        DeleteRecords(id) {
+            if (!id) {  window.showMessage("id 为空","error"); return; }
+            return this.toFetch
+                .setMethod("DeleteRecords")
+                .setContent(JSON.stringify({id}))
+                .Post();
+        }
+    }
+
     class FileOpAction {
         constructor(toFetch,b64str) {
             this.toFetch = toFetch;
@@ -108,6 +177,11 @@ Actions = (function() {
             this.b64str = new Base64String();
             this.DemoAction = new DemoAction(this.toFetch,this.b64str);
             this.FileOpAction = new FileOpAction(this.toFetch,this.b64str);
+            this.FileActionRecords = new RecordsAction(this.toFetch,this.b64str,"fileAction");
+            this.FilesRecords = new RecordsAction(this.toFetch,this.b64str,"files");
+            this.InitSourcesFromDB = () =>
+                this.toFetch
+                .setMethod("InitSourcesFromDB").Post();
         }
     }
 })();

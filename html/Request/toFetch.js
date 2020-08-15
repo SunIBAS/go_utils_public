@@ -15,7 +15,11 @@ class toFetch {
         this.FailThrow = true;
     }
     setContent(content) {
-        this.content = content;
+        if (typeof content === "object") {
+            this.content = JSON.stringify(content);
+        } else {
+            this.content = content;
+        }
         return this;
     }
     setMethod(method) {
@@ -98,6 +102,9 @@ class Base64String {
     }
     encode(str){
         // 对字符串进行编码
+        if (typeof str !== "string") {
+            str = JSON.stringify(str);
+        }
         var encode = encodeURI(str);
         // 对编码的字符串转化base64
         var base64 = btoa(encode);

@@ -93,6 +93,7 @@ func SayHelloSocket(sm AboutServer.SocketMessage,config InitHttp.Config) {
 | Entrance | 复制初始化数据库、日志和其他基础配置 |
 | InitAction | 初始化请求，并引入 Apis 文件夹中 xxxAction |
 | InitSocket | 初始化socket，并引入 Apis 文件夹中 xxxSocket |
+| InitSources | 初始化资源文件 |
 
 ```text
 InitHttp 提供该目录中对外的入口方法 InitHttp，需要一个配置文件路径，或者一个 空路径
@@ -125,6 +126,22 @@ InitSocket 考虑到 socket 通信的内容可能较少，
 if sm.Method == "sayHello" {
     Apis.SayHelloSocket(sm,config)
 }
+
+
+InitSourcesFromDB 是将记录在数据库中的资源文件生成到实际文件目录下
+这里结构体 fileRec 是同事在 records.html 下默契定义的
+type fileRec struct {
+	FileName string `json:"FileName"`
+	Content string `json:"Content"`
+}
+// 下面是 records.html 的内容 
+recordEntity: {
+    FileName: '',
+    CreateTime: '',
+    Content: '',
+    Description: '',
+    Id: '',
+},
 ```
 
 - 📂 main/Sqls

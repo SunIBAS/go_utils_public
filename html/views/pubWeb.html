@@ -3,70 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <title>Demos</title>
-    <script src="./../base.js"></script>
+    <script src="./../base.js?"></script>
 </head>
 <body>
-<div id="app" style="padding: 8px;">
-    <Tabs>
-        <tab-pane label="列表" name="name1">
-            <i-table :columns="columns1" :data="data1"></i-table>
-        </tab-pane>
-        <tab-pane label="添加" name="name2">标签二的内容</tab-pane>
-    </Tabs>
-</div>
+<template id="app">
+    <div style="padding: 8px">
+        <div v-if="mode=='list'">
+            <div style="padding-bottom: 10px;">
+                <i-button type="primary" @click="list">刷新</i-button>
+                <i-button type="info" @click="addDemo">新增</i-button>
+            </div>
+
+            <i-table :columns="columns" :data="data">
+                <template slot-scope="{ row, index }" slot="action">
+                    <i-button type="success" size="small" @click="run(index)">启动</i-button>
+                    <i-button type="info" size="small" @click="visit(index)">访问</i-button>
+                    <i-button type="error" size="small" @click="deleteDemo(index)">删除</i-button>
+                </template>
+            </i-table>
+        </div>
+        <div v-else>
+            <Row>
+                <i-col span="4">路径例子：</i-col>
+                <i-col span="20">
+                    H:\temp\data_collection
+                </i-col>
+            </Row><br/>
+            <Row>
+                <i-col span="4">路径：</i-col>
+                <i-col span="20">
+                    <i-input v-model="demoEntity.Dir" placeholder="路径" :rows="15"/>
+                </i-col>
+            </Row><br/>
+            <Row>
+                <i-col span="4">完整访问链接为：</i-col>
+                <i-col span="20">
+                    {{fullLink}}
+                </i-col>
+            </Row><br/>
+            <Row>
+                <i-col span="4">访问前缀：</i-col>
+                <i-col span="20">
+                    <i-input @input="changeFullLink" v-model="demoEntity.PerPath" placeholder="访问前缀" :rows="3"/>
+                </i-col>
+            </Row><br/>
+            <Row>
+                <i-col offset="4" span="20">
+                    <i-button @click="addDemoOk" type="primary">提交</i-button>
+                    <i-button @click="mode='list'" type="info">返回</i-button>
+                </i-col>
+            </Row>
+        </div>
+    </div>
+</template>
 <script>
     injectIviewCore(function () {
         console.log('load');
         new Vue({
             el: '#app',
             data: {
-                columns1: [
+                mode: "list", // add update
+                addOrUpdate: "",
+                columns: [
                     {
-                        title: 'Name',
-                        key: 'name'
+                        type: 'index',
+                        width: 60,
+                        align: 'center'
                     },
                     {
-                        title: 'Age',
-                        key: 'age'
+                        title: '文件夹',
+                        key: 'Dir'
                     },
                     {
-                        title: 'Address',
-                        key: 'address'
+                        title: '创建时间',
+                        key: 'CreateTime'
+                    },
+                    {
+                        title: 'Action',
+                        slot: 'action',
+                        width: 200,
+                        align: 'center'
                     }
                 ],
-                data1: [
-                    {
-                        name: 'John Brown',
-                        age: 18,
-                        address: 'New York No. 1 Lake Park',
-                        date: '2016-10-03'
-                    },
-                    {
-                        name: 'Jim Green',
-                        age: 24,
-                        address: 'London No. 1 Lake Park',
-                        date: '2016-10-01'
-                    },
-                    {
-                        name: 'Joe Black',
-                        age: 30,
-                        address: 'Sydney No. 1 Lake Park',
-                        date: '2016-10-02'
-                    },
-                    {
-                        name: 'Jon Snow',
-                        age: 26,
-                        address: 'Ottawa No. 2 Lake Park',
-                        date: '2016-10-04'
-                    }
-                ]
+                data: [],
+                demoEntity: {
+                    Id: "",
+                    Dir: "",
+                    PerPath: "",
+                },
+                fullLink: ""
             },
             methods: {
-                show: function () {
-                    this.visible = true;
+                list() {
+                    let $this = this;
+                    RequestInstance.pubweb.list()
+                        .then(_ => {
+                            $this.data.splice(0,$this.data.length,..._);
+                            if (_.length === 0) {
+                                $this.$Message.info('暂时没有数据');
+                                return;
+                            }
+                        });
+                },
+                addDemo() {
+                    for (let i in this.demoEntity) {
+                        this.demoEntity[i] = "";
+                    }
+                    this.mode = "add";
+                },
+                addDemoOk() {
+                    let $this = this;
+                    RequestInstance.pubweb.add(
+                        this.demoEntity.Dir,
+                        this.demoEntity.PerPath)
+                        .then(_ => {
+                            window.showMessage("插入成功");
+                            $this.mode = "list";
+                            $this.list();
+                        });
+                },
+                deleteDemo(index) {
+                    let $this = this;
+                    RequestInstance.pubweb.delete(this.data[index].Id,this.data[index].PerPath)
+                        .then(() => {
+                            window.showMessage("删除成功");
+                            $this.list();
+                        });
+                },
+                run(index) {
+                    let $this = this;
+                    RequestInstance.pubweb.run(this.data[index].PerPath,this.data[index].Dir)
+                        .then(() => {
+                            window.showMessage("启动成功");
+                            $this.list();
+                        });
+                },
+                visit(index) {
+                    console.log(baseIP + 'pubWeb/' + this.data[index].PerPath);
+                    window.open(baseIP + 'pubWeb/' + this.data[index].PerPath);
+                },
+                changeFullLink(nv) {
+                    if (nv) {
+                        this.fullLink = baseIP + 'pubWeb/' + nv;
+                    } else {
+                        this.fullLink = "输入后可见";
+                    }
                 }
+            },
+            mounted() {
+                this.list();
             }
-        })
+        });
+        //http://localhost:3000/pubWeb/cesiumMap/index.html
     });
 </script>
 </body>
