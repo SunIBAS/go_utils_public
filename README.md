@@ -8,6 +8,8 @@
 
 > 使用的 ui 为 [iview](https://www.iviewui.com/components)
 
+[🔗 packageR.exe 后期可能需要使用到](https://github.com/SunIBAS/data_collection/releases/tag/v1.0)
+
 [🔗 用Go实现CORS跨域资源共享的服务器支持](http://semicircle.github.io/blog/2013/09/29/go-with-cors/)
 
 [🔗 statik 实现将html打包放入go中](https://github.com/rakyll/statik)
@@ -181,7 +183,6 @@ eapi.setDatas({
 // 获取流程图
 let lct = eapi.getData();
 ```
-
 
 
 ----

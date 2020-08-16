@@ -46,5 +46,8 @@ func InitHttp(configPath string) {
 	if err != nil {
 		fmt.Println(err)
 		return
+	} else {
+		fmt.Println("打开浏览器，访问以下链接")
+		fmt.Println("http://localhost" + config.Port)
 	}
 }
