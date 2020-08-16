@@ -8,6 +8,9 @@
         .help p {
             font-size: 16px;
         }
+        th,td {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -15,7 +18,7 @@
     <div>
         <Modal v-model="showHelp" fullscreen :footer-hide="true" title="帮助">
             <div class="help">
-                <p>下载 <a href="https://disc.gsfc.nasa.gov/datasets">GES DISC</a> 网站的遥感影像数据</p>
+                <p>下载 <a target="_blank" href="https://disc.gsfc.nasa.gov/datasets">GES DISC</a> 网站的遥感影像数据</p>
                 <P>筛选数据</P>
                 <img style="height: 320px" src="./../images/GES_DISC_SELECT.jpg" alt="">
                 <P>进入选中的数据，点击右方的 <span style="color: #2db7f5">Online Archive</span></P>
@@ -24,9 +27,68 @@
                 <img style="height: 250px" src="./../images/GES_DISC_FILELIST.jpg" alt="">
                 <p>文件的完整下载路径就是：<span style="color: #2196F3;">上方的链接+文件名</span></p>
                 <p>例如 <span style="color: #2196F3;">https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_NOAH025_3H.2.1/2003/011/GLDAS_NOAH025_3H.A20030111.0000.021.nc4</span></p>
+                <h2>表单填写方法如下</h2>
+                <p>假设下载上图的文件</p>
+                <p style="color: #2196F3;">url : https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_NOAH025_3H.2.1/{year}/{dd}/GLDAS_NOAH025_3H.A{year}{month}{day}.{param0}.021.{param1}</p>
+                <img src="./../images/GES_DISC_FORM_EXAMPLE.jpg" style="width: 100%" alt="">
+                <p>链接中可用的参数如下</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 150px;">参数</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>year</td>
+                            <td>年(4位)</td>
+                        </tr>
+                        <tr>
+                            <td>month</td>
+                            <td>月(2位)</td>
+                        </tr>
+                        <tr>
+                            <td>day</td>
+                            <td>日(2位)</td>
+                        </tr>
+                        <tr>
+                            <td>dd</td>
+                            <td>儒略日(3位)</td>
+                        </tr>
+                        <tr>
+                            <td>param1</td>
+                            <td>自行添加的参数1</td>
+                        </tr>
+                        <tr>
+                            <td>param2</td>
+                            <td>自行添加的参数2</td>
+                        </tr>
+                        <tr>
+                            <td>...</td>
+                            <td>...</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br/><br/><br/><br/>
+                <p>安装 <a target="_blank" href="http://gnuwin32.sourceforge.net/packages/wget.htm">weget for windows</a> </p>
+                <img src="./../images/wget_windows.jpg" alt="" style="width: 600px;"/>
             </div>
         </Modal>
         <div style="padding: 10px;">
+            <p style="padding: 10px 0;">下载 <a target="_blank" href="https://disc.gsfc.nasa.gov/datasets">GES DISC</a> 网站的遥感影像数据</p>
+            <Row>
+                <i-col span="4">用户名：</i-col>
+                <i-col span="20">
+                    <i-input v-model="form.username"  placeholder="用户名" :rows="15"/>
+                </i-col>
+            </Row><br/>
+            <Row>
+                <i-col span="4">密码：</i-col>
+                <i-col span="20">
+                    <i-input v-model="form.password"  placeholder="密码" :rows="15"/>
+                </i-col>
+            </Row><br/>
             <Row>
                 <i-col span="4">链接：</i-col>
                 <i-col span="20">
@@ -45,29 +107,24 @@
                     <i-input v-model="form.endTime"  placeholder="结束时间" :rows="15"/>
                 </i-col>
             </Row><br/>
-            <Row>
-                <i-col span="4">文件名：</i-col>
-                <i-col span="20">
-                    <i-input v-model="form.filename"  placeholder="文件名" :rows="15"/>
-                </i-col>
-            </Row><br/>
             <Row v-for="(p,ind) in form.params" :key="ind" style="padding-bottom: 10px;">
                 <i-col span="4">{{p.name}}</i-col>
                 <i-col span="20">
                     <Tag v-for="(item,ind2) in p.vals" :key="item" :name="item" closable @on-close="handleClose(ind,ind2)">{{ item }}</Tag>
                     <i-button icon="ios-add" type="dashed" size="small" @click="handleAdd(ind)">添加标签</i-button>
+                    <i-button type="error" ghost size="small" @click="handleDelete(p.name)">删除该变量</i-button>
                 </i-col>
             </Row><br/>
             <Row>
                 <i-col span="4"></i-col>
                 <i-col span="20">
                     <i-button @click="addParams">添加变量</i-button>
+                    <i-button @click="clearParams">清空变量</i-button>
                 </i-col>
             </Row><br/>
-
             <Row>
                 <i-col offset="4" span="20">
-                    <i-button type="primary">提交</i-button>
+                    <i-button type="primary" @click="formDownloadFile">生成下载文件</i-button>
                     <i-button type="info" @click="showHelp=true">查看帮助</i-button>
                 </i-col>
             </Row>
@@ -77,25 +134,41 @@
 </body>
 <script>
     injectIviewCore(function () {
-        new Vue({
+        let dayFormat = /^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/;
+        let formWget = (urls,username,password) => {
+            return urls.map(url => {
+                let urls = url.split('/');
+                return `if not exist ${urls[urls.length - 1]} wget --no-check-certificate --load-cookies urs_cookies --save-cookies urs_cookies --auth-no-challenge=on --keep-session-cookies --user=${username} --password=${password} --content-disposition ${url}`
+            });
+        };
+        window.$vue = new Vue({
             el: "#app",
             data: {
                 showHelp: false,
                 form: {
                     startTime: "2019-1-1",
                     endTime: "2019-12-31",
-                    url: "",
-                    filename: "",
-                    paramsInd: 0,
+                    url: "https://hydro1.gesdisc.eosdis.nasa.gov/data/GLDAS/GLDAS_NOAH025_3H.2.1/{year}/{dd}/GLDAS_NOAH025_3H.A{year}{month}{day}.{param0}.021.{param1}",
+                    paramsInd: 2,
+                    username: "可以生成后替换用户名",
+                    password: "可以生成后替换密码",
                     params: [
-                        // {
-                        //     name: "",
-                        //     vals: []
-                        // }
+                        {
+                            name: "param0",
+                            vals: ["0000","0300","0600","0900","1200","1500","1800"]
+                        },
+                        {
+                            name: "param1",
+                            vals: ["nc4","nc4.xml"]
+                        },
                     ]
                 }
             },
             methods: {
+                clearParams() {
+                    this.form.params.splice(0,this.form.params.length);
+                    this.form.paramsInd = 0;
+                },
                 addParams() {
                     this.form.params.push({
                         name: `param${this.form.paramsInd}`,
@@ -113,11 +186,66 @@
                         });
                     },"","输入参数，多个用空格分开");
                 },
+                handleDelete(name) {
+                    let ind = -1;
+                    this.form.params.forEach((p,i) => {
+                        if (p.name === name) {
+                            ind = i;
+                        }
+                    });
+                    if (ind !== -1) {
+                        this.form.params.splice(ind,1);
+                    }
+                },
                 handleClose(ind1,ind2) {
                     this.form.params[ind1].vals.splice(ind2,1);
+                },
+                formDownloadFile() {
+                    if (dayFormat.test(this.form.startTime) && dayFormat.test(this.form.endTime)) {
+                        let out = [];
+                        let params = JSON.parse(JSON.stringify(this.form.params));
+                        let st_ymd = this.form.startTime.split('-');
+                        let ed_ymd = this.form.endTime.split('-');
+                        let nd = getDays.getFromDay(+st_ymd[0],+st_ymd[1],+st_ymd[2],false,true,+ed_ymd[0],+ed_ymd[1],+ed_ymd[2]);
+                        for (;true;) {
+                            let d = nd();
+                            if (d) {
+                                let _params = [
+                                    ...params,
+                                    {
+                                        name: 'year',
+                                        vals: [ d.substring(0,4) ]
+                                    },
+                                    {
+                                        name: 'month',
+                                        vals: [ d.substring(4,6).toLength(2) ]
+                                    },
+                                    {
+                                        name: 'day',
+                                        vals: [ d.substring(6).toLength(2) ]
+                                    },
+                                    {
+                                        name: 'dd',
+                                        vals: [ (getDays.getDayBetweenFromYearFirstDay(d) + 1).toLength(3) ]
+                                    },
+                                ];
+                                out = out.concat(
+                                    formWget(
+                                        replaceString(this.form.url,_params),
+                                        this.form.username,this.form.password
+                                    ));
+                            }
+                            else {
+                                console.log('结束'); break;
+                            }
+                        }
+                        window.saveFile(out.join("\r\n"));
+                    } else {
+                        window.showMessage("时间格式错误，应该为 年-月-日 例如 2018-1-1 2018-12-1",window.showMessageType.error);
+                    }
                 }
             }
         });
-    });
+    },["utils/getDays.js","utils/replaceString.js"]);
 </script>
 </html>

@@ -54,19 +54,22 @@ window.loading = ()=>{};
 window.closeLoading = ()=>{};
 window.showMessage = (msg,type)=>{};
 
-const injectIviewCore = function (cb) {
+const injectIviewCore = function (cb,ofiles) {
     let sourcePath = "";
     let child = !(window.parent === window);
     window.sourceIP = location.origin;
     if (location.pathname.substring(0,7) !== "/public") {
         window.baseIP = `http://localhost:3000/`;
         window.sourceIP += "/go_utils_public/html"
+    } else if (location.host === "www.sunibas.cn") {
+        window.sourceIP += "/public/utils";
     } else {
         window.baseIP = window.sourceIP + "/";
         window.sourceIP += "/public"
     }
     cb = cb || (() => {});
 
+    ofiles = ofiles || [];
     const canGetFromParentSource = [
         ...[
             "toFetch.js",
@@ -81,7 +84,8 @@ const injectIviewCore = function (cb) {
             'iview.css',
             'vue.min.js',
             'iview.min.js',
-        ].map(_ => window.sourceIP + "/iview/" + _)
+        ].map(_ => window.sourceIP + "/iview/" + _),
+        ...ofiles.map(_ => window.sourceIP + "/" + _)
     ];
     insertCssOrJs(function () {
         if (child) {

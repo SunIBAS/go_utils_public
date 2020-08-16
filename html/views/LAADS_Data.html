@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="./../base.js?"></script>
+</head>
+<body>
+<span style="color: #2196F3;"></span>
+<template id="app">
+    <div style="padding: 10px;">
+        <p>
+            <a href="https://ladsweb.modaps.eosdis.nasa.gov/search" target="_blank">LADDS DAAC Find Data</a>
+            <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <a target="_blank" href="https://ladsweb.modaps.eosdis.nasa.gov/tools-and-services/data-download-scripts/">申请 App Keys</a>
+            <img style="height: 220px;" src="./../images/LAADS_DATA_SEARCH_OVER.jpg" alt="">
+        </p>
+        <Row>
+            <i-col span="4">APP KEY：</i-col>
+            <i-col span="20">
+                <i-input v-model="appkey"  placeholder="app key" :rows="15"/>
+            </i-col>
+        </Row><br/>
+        <Upload action="." accept=".json" :before-upload="open">
+            <i-button icon="ios-cloud-upload-outline">上传 json 文件</i-button>
+        </Upload>
+        <p>
+            下载 <a href="https://curl.haxx.se/windows/" target="_blank">curl</a>
+            <br/>
+            <img src="./../images/curl_windows.jpg" alt="" style="width: 600px;"/>
+        </p>
+    </div>
+</template>
+<script>
+    let getCmd = (url,appkey) => {
+        let surl = url.split('/');
+        return `curl -# -H "Authorization: Bearer ${appkey}" "https://ladsweb.modaps.eosdis.nasa.gov${url}" -o ${surl[surl.length - 1]}`
+    };
+    injectIviewCore(function () {
+        new Vue({
+            el: "#app",
+            data: {
+                appkey: "可以生成后替换AppKey"
+            },
+            methods: {
+                open(file) {
+                    window.ret = file;
+                    readFile(file)
+                        .then(JSON.parse)
+                        .then(q => {
+                            let out = [];
+                            for (let i in q) {
+                                if (q[i].url) {
+                                    out.push(getCmd(q[i].url,this.appkey));
+                                }
+                            }
+                            window.saveFile(out.join("\r\n"));
+                        });
+                    return false;
+                }
+            }
+        });
+    },['utils/readFile.js']);
+</script>
+</body>
+</html>
