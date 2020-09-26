@@ -3,5 +3,5 @@
 /_release/*.bat
 /_release/*.db
 /_release/*.zip
-/test/
-utils.exe
+/test/testGo
+/test/testView
