@@ -66,7 +66,7 @@ func pubWebAdd(params AboutServer.Parmas,rObj AboutServer.ReturnObj,writer http.
 					Status:     "start",
 					CreateTime: strconv.FormatInt(time.Now().UnixNano(),10),
 				},config.Tables[pubWebTableName])
-				SqliteSql.ExecSqlString(config.DB,sql)
+				SqliteSql.ExecSqlString(config.DB,sql,config.Logger)
 				pubWebMap[pubWebRoot + "/" + pubweb.PerPath] = false
 				rObj.SetSuccess("定义成功,链接为 :" + pubWebRoot + "/" + pubweb.PerPath).Send(writer)
 			}
@@ -142,7 +142,7 @@ func pubWebDelete(params AboutServer.Parmas,rObj AboutServer.ReturnObj,writer ht
 		rObj.SetError(perr.Error()).Send(writer)
 	} else {
 		var sql = "delete from " + pubWebTableName + " where `id`='" + pubweb.Id + "'"
-		SqliteSql.ExecSqlString(config.DB,sql)
+		SqliteSql.ExecSqlString(config.DB,sql,config.Logger)
 		delete(pubWebMap,pubWebRoot + "/" + pubweb.PerPath)
 		rObj.SetSuccess("删除成功").Send(writer)
 	}

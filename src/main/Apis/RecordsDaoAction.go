@@ -101,7 +101,7 @@ func InsertRecords(writer http.ResponseWriter,s string,config MainTools.Config) 
 	} else {
 		records.CreateTime = strconv.FormatInt(time.Now().UnixNano(),10)
 		sql,id := SqliteSql.GetInsertSql(records,config.Tables[recordTableName])
-		SqliteSql.ExecSqlString(config.DB,sql)
+		SqliteSql.ExecSqlString(config.DB,sql,config.Logger)
 		rObj.SetStringContent(id).SetSuccess("插入成功").Send(writer)
 	}
 }
@@ -166,7 +166,7 @@ func DeleteRecords(writer http.ResponseWriter,s string,config MainTools.Config) 
 		rObj.SetFail("参数解析错误，err:" + err.Error()).Send(writer)
 	} else {
 		var sql = "delete from " + recordTableName + " where `id`='" + records.Id + "'"
-		SqliteSql.ExecSqlString(config.DB,sql)
+		SqliteSql.ExecSqlString(config.DB,sql,config.Logger)
 		rObj.SetStringContent("删除成功").SetSuccess("").Send(writer)
 	}
 }

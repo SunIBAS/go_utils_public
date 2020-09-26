@@ -491,7 +491,9 @@
                     let files = [];
                     if (!this.filter.noFile) {
                         window._cache.files.forEach(f => {
-                            files.push(f);
+                            if (this.filter.ext.indexOf(window._cache.extMap[f.ext]) !== -1) {
+                                files.push(f);
+                            }
                         });
                     }
                     act(files,this.filter.noDir ? [] : window._cache.dirs);

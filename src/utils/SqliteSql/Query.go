@@ -1,6 +1,9 @@
 package SqliteSql
 
-import "database/sql"
+import (
+	"database/sql"
+	"log"
+)
 
 /*
 使用方法
@@ -52,7 +55,12 @@ func QueryCount(table string,db * sql.DB) int {
 }
 
 // 执行无返回的数据库查询
-func ExecSqlString(db * sql.DB,sqlstring string) {
+func ExecSqlString(db * sql.DB,sqlstring string,Logger * log.Logger) {
+	if nil != Logger {
+		Logger.Print(sqlstring)
+	} else {
+		log.Print(sqlstring)
+	}
 	statement,err := db.Prepare(sqlstring)
 	if err != nil {
 		panic(err)

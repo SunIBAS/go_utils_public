@@ -4,3 +4,4 @@
 /_release/*.db
 /_release/*.zip
 /test/
+utils.exe

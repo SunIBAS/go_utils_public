@@ -12,13 +12,23 @@
         <p>
             <a href="https://ladsweb.modaps.eosdis.nasa.gov/search" target="_blank">LADDS DAAC Find Data</a>
             <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <a target="_blank" href="https://ladsweb.modaps.eosdis.nasa.gov/tools-and-services/data-download-scripts/">申请 App Keys</a>
+            <a target="_blank" href="https://ladsweb.modaps.eosdis.nasa.gov/tools-and-services/data-download-scripts/">申请 App Keys</a><br/>
             <img style="height: 220px;" src="./../images/LAADS_DATA_SEARCH_OVER.jpg" alt="">
         </p>
         <Row>
             <i-col span="4">APP KEY：</i-col>
             <i-col span="20">
                 <i-input v-model="appkey"  placeholder="app key" :rows="15"/>
+            </i-col>
+        </Row><br/>
+        <Row>
+            <i-col span="4">检查存在</i-col>
+            <i-col span="20">
+                <Radio-Group v-model="checkExist">
+                    <Radio label="不检查"></Radio>
+                    <Radio label="windows"></Radio>
+                    <Radio label="linux"></Radio>
+                </Radio-Group>
             </i-col>
         </Row><br/>
         <Upload action="." accept=".json" :before-upload="open">
@@ -32,15 +42,27 @@
     </div>
 </template>
 <script>
-    let getCmd = (url,appkey) => {
+    let getCmd = (url,appkey,checkExist) => {
         let surl = url.split('/');
-        return `curl -# -H "Authorization: Bearer ${appkey}" "https://ladsweb.modaps.eosdis.nasa.gov${url}" -o ${surl[surl.length - 1]}`
+        if (checkExist === "windows") {
+            return `if not exist ${surl[surl.length - 1]} curl -# -H "Authorization: Bearer ${appkey}" "https://ladsweb.modaps.eosdis.nasa.gov${url}" -o ${surl[surl.length - 1]}`
+        } else if (checkExist === "linux") {
+            return `#文件存在则删除
+if [ ! -f "${surl[surl.length - 1]}" ];then
+  curl -# -H "Authorization: Bearer ${appkey}" "https://ladsweb.modaps.eosdis.nasa.gov${url}" -o ${surl[surl.length - 1]}
+else
+  echo "${surl[surl.length - 1]} 已经存在"
+fi`
+        } else {
+            return `curl -# -H "Authorization: Bearer ${appkey}" "https://ladsweb.modaps.eosdis.nasa.gov${url}" -o ${surl[surl.length - 1]}`;
+        }
     };
     injectIviewCore(function () {
         new Vue({
             el: "#app",
             data: {
-                appkey: "可以生成后替换AppKey"
+                appkey: "可以生成后替换AppKey",
+                checkExist: "windows"
             },
             methods: {
                 open(file) {
@@ -51,7 +73,7 @@
                             let out = [];
                             for (let i in q) {
                                 if (q[i].url) {
-                                    out.push(getCmd(q[i].url,this.appkey));
+                                    out.push(getCmd(q[i].url,this.appkey,this.checkExist));
                                 }
                             }
                             window.saveFile(out.join("\r\n"));

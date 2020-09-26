@@ -106,7 +106,7 @@ func InsertDemo(writer http.ResponseWriter,s string,config MainTools.Config) {
 		demo.CreateTime = strconv.FormatInt(time.Now().UnixNano(),10)
 		demo.Lang = strings.ToUpper(demo.Lang)
 		sql,_ := SqliteSql.GetInsertSql(demo,config.Tables[demoTableName])
-		SqliteSql.ExecSqlString(config.DB,sql)
+		SqliteSql.ExecSqlString(config.DB,sql,config.Logger)
 		rObj.SetSuccess("插入成功").Send(writer)
 	}
 }
@@ -158,7 +158,7 @@ func DeleteDemo(writer http.ResponseWriter,s string,config MainTools.Config) {
 		rObj.SetFail("参数解析错误，err:" + err.Error()).Send(writer)
 	} else {
 		var sql = "delete from " + demoTableName + " where `id`='" + demo.Id + "'"
-		SqliteSql.ExecSqlString(config.DB,sql)
+		SqliteSql.ExecSqlString(config.DB,sql,config.Logger)
 		rObj.SetStringContent("删除成功").SetSuccess("").Send(writer)
 	}
 }

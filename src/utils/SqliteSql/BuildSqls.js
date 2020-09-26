@@ -54,7 +54,7 @@ func ParseRows{EntityName}(rows * sql.Rows) []{EntityName}Entity {
 func (entity {EntityName}Entity)InsertOrUpdate(database * sql.DB,{entityName}Table SqliteSql.Table)  {
 \tvalues,_ := SqliteSql.GetInsertValues(entity,{entityName}Table,entity.Id)
 \tinsertOrUpdate := {entityName}Table.GetSpecialInsertSql("insertOrUpdate",values)
-\tSqliteSql.ExecSqlString(database,insertOrUpdate)
+\tSqliteSql.ExecSqlString(database,insertOrUpdate,nil)
 }
 `;
 let out = ``;

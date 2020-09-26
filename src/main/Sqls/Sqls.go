@@ -105,7 +105,7 @@ func ParseRowsDemo(rows * sql.Rows) []DemoEntity {
 func (entity DemoEntity)InsertOrUpdate(database * sql.DB,demoTable SqliteSql.Table)  {
 	values,_ := SqliteSql.GetInsertValues(entity,demoTable,entity.Id)
 	insertOrUpdate := demoTable.GetSpecialInsertSql("insertOrUpdate",values)
-	SqliteSql.ExecSqlString(database,insertOrUpdate)
+	SqliteSql.ExecSqlString(database,insertOrUpdate,nil)
 }
 
 
@@ -207,7 +207,7 @@ func ParseRowsPubWeb(rows * sql.Rows) []PubWebEntity {
 func (entity PubWebEntity)InsertOrUpdate(database * sql.DB,pubwebTable SqliteSql.Table)  {
 	values,_ := SqliteSql.GetInsertValues(entity,pubwebTable,entity.Id)
 	insertOrUpdate := pubwebTable.GetSpecialInsertSql("insertOrUpdate",values)
-	SqliteSql.ExecSqlString(database,insertOrUpdate)
+	SqliteSql.ExecSqlString(database,insertOrUpdate,nil)
 }
 
 
@@ -317,7 +317,7 @@ func (entity RecordsEntity)InsertOrUpdate(database * sql.DB,recordsTable SqliteS
 	values,_ := SqliteSql.GetInsertValues(entity,recordsTable,entity.Id)
 	insertOrUpdate := recordsTable.GetSpecialInsertSql("insertOrUpdate",values)
 	fmt.Println("[InsertOrUpdate]>>> " + insertOrUpdate)
-	SqliteSql.ExecSqlString(database,insertOrUpdate)
+	SqliteSql.ExecSqlString(database,insertOrUpdate,nil)
 }
 
 // 启动前调用该方法
