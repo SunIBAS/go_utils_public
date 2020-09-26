@@ -1,0 +1,7 @@
+{
+	"cwd_path": "",
+	"db_path": "C:\\Users\\IBAS\\go\\src\\public.sunibas.cn\\go_utils_public\\test\\out\\db.db",
+	"port": ":3000",
+	"log_path": "C:\\Users\\IBAS\\go\\src\\public.sunibas.cn\\go_utils_public\\test\\out\\log.log",
+	"node_path": "C:\\Users\\IBAS\\go\\src\\public.sunibas.cn\\go_utils_public\\test\\out\\node.exe"
+}
